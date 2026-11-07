@@ -1,58 +1,92 @@
-# Spike Virtual ISA 0.1 — design draft
+# Spike Virtual ISA 0.1
 
-**Status:** Proposed architecture baseline; not a frozen encoding
+**Status:** Normative initial executable subset; extensions remain proposals.
 
-## Purpose
+## 1. Machine state
 
-This document sketches the virtual machine contract independently of x86 opcode encoding. Candidate instructions become normative only after operand forms, effects, flags, overflow, faults, and Quick/Native behavior are specified.
+The initial machine state contains:
 
-## Proposed machine state
+| Component | Definition |
+|---|---|
+| GPRs | Sixteen unsigned 64-bit registers, R0 through R15 |
+| PC | Unsigned 64-bit instruction index |
+| Flags | Z (zero), N (negative/sign), C (carry/borrow), V (signed overflow) |
+| Execution | RUNNING, HALTED, or FAULTED |
 
-| State | Candidate definition | Open decision |
-|---|---|---|
-| GPRs | Sixteen 64-bit integer registers R0–R15 | Reserved/special registers |
-| PC | 64-bit program counter | Instruction index or byte address |
-| Flags | Explicit status bits | Exact bits and write masks |
-| SP | Virtual stack pointer | Dedicated state or GPR alias |
-| Memory | Virtual address space | Mapping and layout |
-| Execution | Running, halted, faulted | Fault taxonomy |
+All GPRs, flags, and PC are independent of host CPU registers and flags. There is no implicit alias to x86-64 registers.
 
-No virtual register aliases host RAX, RSP, RIP, or RFLAGS by default.
+The initial state is deterministic: all GPRs are zero, PC is zero, all flags are clear, and execution is RUNNING.
 
-## Candidate instruction groups
+The PC addresses entries in the validated instruction sequence, not byte offsets in source text or native machine code. The execution engine fetches the instruction at PC and advances PC to the following instruction before applying that instruction's operation. Consequently, after HALT, PC identifies the instruction following HALT.
 
-- Data movement: MOV, LOAD, STORE.
-- Integer arithmetic: ADD, SUB, MUL, DIV.
-- Bitwise and shifts: AND, OR, XOR, NOT, SHL, SHR; consider SAR.
-- Control flow: JMP, conditional branches, CALL, RET, HALT.
-- Environment services: outside the architecture-neutral core pending a profile.
+A FAULTED state is terminal for this initial subset. Its detailed fault payload is defined by the runtime contract before faults are exposed by the Quick Engine.
 
-For MUL, define low-half versus full-width result. For DIV, define signedness, quotient/remainder destinations, zero-divisor behavior, and overflow behavior.
+## 2. Operand conventions
 
-## Operand model
+- Register operands are written R0 through R15.
+- Integer values are 64-bit bit patterns.
+- Arithmetic and logical instructions use a consistent three-operand form: destination, left source, right source.
+- MOV and NOT use two operands: destination and source.
+- The destination may alias either source. Both source values are read from the pre-instruction state before the destination is written.
+- Immediate values are permitted where the instruction form allows them; the frontend must reject values outside the unsigned 64-bit bit-pattern range.
 
-Candidate operands are registers, integer literals, symbols, and simple base-plus-displacement memory references. Indexed addressing, scale factors, complex expressions, and indirect branches should wait until the base model is stable.
+The source grammar and exact tokenization are specified separately in the language grammar.
 
-The project must choose either a consistent two-operand or three-operand arithmetic convention. Do not mix conventions arbitrarily.
+## 3. Flags
 
-## Arithmetic and flags
+- Z is set exactly when the operation's 64-bit result is zero.
+- N is the most significant bit of the 64-bit result.
+- C is the unsigned carry-out for ADD and the unsigned borrow-out for SUB.
+- V is signed two's-complement overflow for ADD and SUB.
 
-A candidate ADD/SUB result model is modulo 2^64, with carry and signed overflow reported independently. This remains a proposal. Define signedness, truncation, aliasing, and flag effects per instruction.
+Instructions that do not define flag updates preserve all flags. Logical instructions update Z and N and clear C and V. MOV and NOT preserve all flags. HALT preserves all flags.
 
-A compact flag set might include zero, sign, carry, and signed overflow. Do not copy x86 RFLAGS wholesale. Each instruction declares which flags it writes and preserves.
+## 4. Initial instruction subset
 
-## Memory
+### MOV destination, source
 
-Specify transfer width, address calculation, alignment, sign/zero extension, permissions, cross-region behavior, and faults. Little-endian is proposed for the initial x86-64 profile, but byte order belongs to a declared profile.
+Copies the 64-bit source bit pattern to the destination. Flags are unchanged.
 
-## Pseudo-instructions
+### ADD destination, left, right
 
-Pseudo-instructions are assembler expansions, not virtual opcodes. Document expansion, register clobbers, flag effects, memory effects, and size variability. NOP must preserve all architecturally visible state; it cannot be implemented as an ADD that changes flags. PUSH/POP wait until SP and fault atomicity are defined.
+Computes the unsigned 64-bit modular sum of left and right. C records carry-out; V records signed overflow; Z and N describe the truncated 64-bit result.
 
-## Encoding
+### SUB destination, left, right
 
-Spike source syntax is assembled to the selected native target. A serialized fixed-width virtual bytecode is not required for 0.1. If introduced later, it needs a separate versioned specification.
+Computes left minus right modulo 2^64. C is set when unsigned subtraction borrows; V records signed overflow; Z and N describe the result.
 
-## Open questions
+### AND destination, left, right
 
-Register naming and SP policy; PC units; exact flags; width model; signed and unsigned division; branch conditions; CALL/RET semantics; memory layout; compare instruction; and externally visible register preservation.
+Computes bitwise AND, updates Z and N, and clears C and V.
+
+### OR destination, left, right
+
+Computes bitwise OR, updates Z and N, and clears C and V.
+
+### XOR destination, left, right
+
+Computes bitwise XOR, updates Z and N, and clears C and V.
+
+### NOT destination, source
+
+Computes the bitwise complement of source, writes destination, and preserves all flags.
+
+### HALT
+
+Changes execution state from RUNNING to HALTED. It does not modify GPRs or flags. No subsequent instruction may execute in HALTED state.
+
+## 5. Instruction-step atomicity
+
+Each instruction is one architectural state transition. Its defined register, flag, PC, and execution-state updates are committed together. A failed validation or execution step must not leave a partially updated architectural state.
+
+An instruction may execute only when the machine is RUNNING. Attempting to step a HALTED or FAULTED machine is rejected by the execution API and does not mutate the state.
+
+## 6. Explicitly outside this subset
+
+Memory access, LOAD/STORE, stack operations, SP/BP, branches, CALL/RET, multiplication/division, shifts, comparisons, system calls, privileged instructions, and pseudo-instructions are not part of this initial executable subset.
+
+They must not be accepted as executable instructions until their semantics are specified in a later ADR/specification update.
+
+## 7. Encoding independence
+
+This document defines virtual behavior, not x86 opcode encodings and not a serialized bytecode format. Quick mode and any future Native backend must implement this contract. Native lowering may use multiple host instructions, but it may not change the observable virtual state.

@@ -1,47 +1,65 @@
 # Spike 0.1 roadmap
 
-**Status:** Proposed dependency order; not a calendar commitment
+**Status:** Ordered implementation plan
 
-## Phase 0 — Architecture baseline
+## Phase 0 — Architecture foundation
 
-Deliver project layer boundaries, ADRs, VM state draft, target profile decision, and deferred-feature list.
+Completed through the initial language specification and architecture baseline. The project identity, custom syntax direction, virtual-ISA model, and x86-family target direction are established.
 
-Exit: source targets an unambiguous virtual ISA; x86-64 profile is confirmed or revised; ISA and grammar agree.
+## Phase 1 — Normative executable core
 
-## Phase 1 — Normative language and ISA subset
+Define the first executable instruction subset and the machine-state contract.
 
-Deliver grammar, register/PC model, arithmetic and flag semantics, load/store behavior, fault model, control flow, and pseudo-instruction policy.
+Deliverables:
+- Sixteen 64-bit general-purpose virtual registers, a 64-bit instruction-index PC, four explicit status flags, and execution state.
+- Deterministic reset state and instruction-step contract.
+- Normative semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT.
+- Positive, negative, boundary, aliasing, and state-transition test vectors.
+- Explicit exclusion of memory, stack, calls, branches, and host services from this first subset.
 
-Exit: every MVP instruction has a complete semantic record and positive/negative test vectors.
+**Exit:** every instruction in the subset has complete operands, state effects, flag behavior, and test vectors.
 
-## Phase 2 — Frontend and Quick Engine
+## Phase 2 — Virtual machine state implementation
 
-Deliver lexer, parser, validator, machine state, interpreter, diagnostics, and structured runtime faults.
+Implement the machine-state types and invariant-preserving operations in Ada 2022, using SPARK for the bounded deterministic core.
 
-Exit: semantic vectors pass in Quick mode; fuzzing finds no known crash-class failures.
+Deliverables:
+- Register and flag types.
+- Machine state and execution-state types.
+- Deterministic initialization.
+- Checked register-index access.
+- Contracts and unit tests for state invariants.
 
-## Phase 3 — x86-64 backend
+**Exit:** the machine-state package compiles, its tests pass, and GNATprove results are recorded for the units actually in SPARK.
 
-Deliver lowering rules, virtual-register preservation, flag strategy, encoder, branch fixups, and symbol handling.
+## Phase 3 — Frontend and Quick Engine
 
-Exit: all claimed instructions have encoding tests; unsupported features fail explicitly; differential tests pass.
+Implement lexer, parser, semantic validation, validated instruction records, and the Quick interpreter.
 
-## Phase 4 — Object output and hosted execution
+**Exit:** the semantic vectors pass in Quick mode; malformed source produces diagnostics rather than uncontrolled termination.
 
-Deliver ELF64 relocatable object writer for the selected hosted profile, symbols, relocations, external linker integration, and minimal host bridge.
+## Phase 4 — Memory and control-flow extensions
 
-Exit: standard tools inspect objects; a minimal program links and runs in the declared environment; ABI assumptions are documented.
+Specify and implement memory regions, loads/stores, faults, branches, stack behavior, and calls in dependency order. Each feature requires normative semantics and tests before implementation.
 
-## Phase 5 — Quality and 0.1 stabilization
+## Phase 5 — x86-64 backend
 
-Deliver conformance suite, differential/property tests, fuzzing, scoped SPARK proof reports, examples, user documentation, and versioned specification.
+Lower the validated virtual instructions to x86-64 while preserving virtual state and flag semantics. Add encoding tests, branch fixups, and differential tests.
 
-Exit: feature matrix is accurate and Quick/Native parity is demonstrated for the supported subset.
+**Exit:** every claimed native instruction has independent encoding evidence and Quick/Native parity tests.
 
-## Deferred beyond the first usable baseline
+## Phase 6 — Object output and hosted execution
 
-Additional architectures; PE/COFF and Mach-O; full custom linker; vector/floating-point ISA; atomics and concurrency; privileged kernel/bootloader profiles; macro system; self-hosting; optimizing passes beyond correctness-preserving lowering.
+Add ELF64 relocatable output for the declared hosted Linux x86-64 profile, symbols, relocations, and external linker integration.
+
+## Phase 7 — Conformance and 0.1 stabilization
+
+Deliver conformance fixtures, differential/property tests, fuzzing, scoped SPARK proof reports, examples, user documentation, and an accurate feature matrix.
+
+## Deferred
+
+Additional native architectures, PE/COFF, Mach-O, a custom linker, vector/floating-point operations, atomics, concurrency, privileged kernel/bootloader profiles, macros, self-hosting, and optimizations beyond correctness-preserving lowering.
 
 ## Change control
 
-If implementation reveals a flaw in an ADR, update the ADR and normative specification before relying on changed behavior. Implementation convenience must not silently become language semantics.
+If implementation exposes a flaw in a normative decision, update the ADR and specification before relying on changed behavior. Implementation convenience must never silently become language semantics.

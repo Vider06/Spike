@@ -1,37 +1,22 @@
 # Spike 0.1 memory and machine-state model
 
-**Status:** Proposed; requires normative decisions
+**Status:** Memory model proposed; initial executable machine state is normative.
 
-## Address model
+## Normative initial state
 
-The proposal uses 64-bit virtual address values, not an assumption that every possible address is mapped. Distinguish virtual addresses, mapped regions, host addresses, and symbolic addresses resolved by assembler/linker.
+The initial machine state is defined by [ISA 0.1](../isa/ISA-0.1.md) and [ADR 0009](adr/0009-initial-executable-subset.md): sixteen 64-bit GPRs, instruction-index PC, Z/N/C/V flags, and RUNNING/HALTED/FAULTED execution state.
 
-## Candidate regions
+The initial executable subset has no memory instructions and no virtual stack pointer. This is intentional; neither memory layout nor stack behavior is implied by the initial register machine.
 
-| Region | Purpose | Proposed permissions |
-|---|---|---|
-| Code | Instructions | Read and execute |
-| Read-only data | Constants | Read |
-| Data | Initialized objects | Read and write |
-| BSS | Zero-initialized storage | Read and write |
-| Stack | Explicit virtual stack | Read and write, bounded |
+## Future memory model
 
-Exact layout and initial SP remain open. Virtual and native process stacks are separate concepts.
+The following remain proposals for a later extension:
 
-## Endianness and access semantics
+- 64-bit virtual address values and explicitly mapped regions.
+- Code, read-only data, writable data, zero-initialized data, and bounded stack regions.
+- Little-endian representation for the first x86-64 profile.
+- Explicit access widths, alignment, permissions, region-crossing behavior, and structured faults.
 
-Little-endian is proposed for the first x86-64 profile. Every load/store defines width, address calculation, alignment, sign/zero extension, permissions, region-crossing behavior, and faults.
+Virtual addresses and host process addresses must remain distinct. Host signals and page faults are implementation mechanisms, not the Spike architectural fault contract.
 
-## Arithmetic
-
-Fixed-width modulo arithmetic is a candidate for integer result values, with carry and signed overflow represented independently. Division by zero and signed minimum divided by negative one need explicit rules; host CPU exceptions must not accidentally define Spike behavior.
-
-## Faults
-
-Candidate faults include invalid opcode/operand, unmapped access, permission violation, misalignment if enforced, division fault, and invalid control-flow target. Specify whether faults terminate execution, return structured status, or can be caught. Catchable exceptions are deferred unless required.
-
-Native mode may use OS mappings and host faults internally. Those mechanisms are not the Spike contract.
-
-## Deferred
-
-Dynamic allocation, paging, memory mapping instructions, segmentation, shared memory, atomics, and concurrency.
+Dynamic allocation, paging, mappings, atomics, and concurrency remain deferred.

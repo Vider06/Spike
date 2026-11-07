@@ -2,15 +2,15 @@
 
 ## Identity and boundaries
 
-Spike defines its own low-level virtual instruction set architecture (virtual ISA). Source code targets that ISA, not x86 mnemonics. The first native backend lowers the virtual ISA to x86-64. This separates three contracts:
+Spike defines its own low-level virtual instruction set architecture. Source code targets the Spike virtual ISA, not x86 mnemonics. The first native backend is planned for x86-64, but x86-64 implements Spike semantics rather than defining them.
 
-1. The language: syntax, operands, labels, directives, and diagnostics.
-2. The virtual machine: registers, PC, flags, memory, control flow, and architectural faults.
-3. The native backend: x86-64 instruction selection, register allocation, encoding, relocations, and host integration.
+The architecture has three layers:
 
-Quick mode interprets the virtual ISA. Native mode lowers the same validated instructions to native code. Both must implement the same semantic definitions.
+1. Language frontend: source syntax, operands, labels, directives, and diagnostics.
+2. Virtual machine: architectural state and virtual instruction behavior.
+3. Native backend: future lowering, register allocation, encoding, relocations, and host integration.
 
-## Pipeline
+## Execution pipeline
 
     Spike source
         |
@@ -18,40 +18,33 @@ Quick mode interprets the virtual ISA. Native mode lowers the same validated ins
         |
     Validated virtual instructions
         |                         |
-    Quick interpreter        x86-64 backend
+    Quick interpreter        Future x86-64 backend
         |                         |
     Virtual state             Native code
-                                  |
-                             ELF object
-                                  |
-                           External linker
 
-An internal IR is an implementation choice, not a language requirement. It must preserve source locations and instruction effects.
+The initial implementation begins with the virtual-machine state package, before the frontend or either execution engine.
 
-## Proposed 0.1 machine profile
+## Initial executable machine
 
-The working proposal is a 64-bit integer virtual machine with sixteen general-purpose registers, a separate PC, explicit status flags, a virtual stack pointer, and a defined address space. Register naming, SP representation, PC units, flag bits, and reset state remain to be finalized in the ISA specification.
+The normative initial subset uses sixteen 64-bit GPRs (R0-R15), a 64-bit instruction-index PC, Z/N/C/V flags, and RUNNING/HALTED/FAULTED execution states. The initial instruction subset is MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT. See [ISA 0.1](../isa/ISA-0.1.md) and [ADR 0009](adr/0009-initial-executable-subset.md).
 
-The virtual SP is not automatically the host RSP. Virtual registers are not permanently assigned one-to-one to x86-64 registers. The backend must account for ABI constraints, temporaries, calls, and spills.
+The first subset deliberately has no memory, stack, branch, call, or host-service instructions. This keeps the state model bounded and lets the first implementation establish precise, testable invariants.
 
-## Native target
+## Implementation technology
 
-The project selected the x86 family. Since the proposed VM is 64-bit, this documentation recommends x86-64 as the concrete first native profile. Legacy 16-bit and 32-bit x86 are outside the initial implementation proposal. The exact minimum CPU baseline and host environment must be confirmed before native artifacts become stable.
+The toolchain implementation uses Ada 2022. SPARK is used for bounded deterministic components where practical, with proof claims limited to the units and properties actually analyzed by GNATprove. Filesystem, process, and platform integration may use ordinary Ada.
 
-## Hosted versus privileged execution
-
-The first usable native workflow should be hosted x86-64. Kernel, bootloader, firmware, and privileged execution require separate entry contracts, memory layouts, privilege assumptions, and system interfaces. They are goals, not automatic properties of generating an ELF file.
+The implementation language is independent of the Spike source language and does not constrain third-party implementations.
 
 ## Architectural invariants
 
 - Every virtual instruction has one normative semantic definition.
-- Quick and Native modes implement that definition.
-- Lowering may use multiple host instructions or helpers but may not silently alter observable Spike behavior.
-- Directives are assembler-time constructs, not CPU instructions.
-- Pseudo-instructions document expansion, clobbers, flags, memory effects, and size.
-- Host ABI and OS services are separate from the virtual ISA.
-- Unsupported features fail explicitly; no approximate lowering is permitted.
+- Quick and Native modes implement the same virtual semantics.
+- Host registers and flags are implementation resources, not virtual state.
+- Directives are assembly-time constructs, not VM instructions.
+- Unsupported features are rejected explicitly.
+- Implementation convenience must not silently become language semantics.
 
 ## Deferred
 
-Additional native architectures, dynamic linking, vector and floating-point state, concurrency, privileged profiles, macro systems, self-hosting, and a serialized virtual bytecode format are deferred.
+Memory, stack, calls, branches, system services, privileged profiles, additional native architectures, dynamic linking, floating-point/vector state, concurrency, macros, and self-hosting are deferred until separately specified.
