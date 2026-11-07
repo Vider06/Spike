@@ -378,3 +378,36 @@ Changes that alter instruction semantics, machine-state behavior, source compati
 ---
 
 **End of Spike Language Specification 0.1-draft.**
+
+
+---
+
+## 17. Spike 0.1 architectural direction
+
+The project direction for Spike 0.1 is:
+
+- **Identity:** Spike defines its own virtual instruction set architecture and machine state.
+- **Initial native target:** x86 family. The concrete 64-bit x86-64 profile is the proposed first backend; legacy 16-bit and 32-bit modes are not in the initial scope.
+- **Source syntax:** custom Spike syntax, defined by a first-party grammar.
+
+These choices establish the architecture direction but do not freeze every machine-state detail or instruction encoding. The virtual ISA is independent of native x86 opcode encoding. The x86-64 backend implements Spike semantics; it does not define them.
+
+## 18. Virtual ISA and execution modes
+
+Quick mode is an interpreter for validated Spike virtual instructions. Native mode lowers those same instructions to the selected native target. Both modes must agree on all architecturally observable behavior defined by the selected profile, including registers, flags, memory, control flow, defined I/O, and halt/fault outcomes.
+
+A virtual instruction may lower to multiple native instructions or a documented runtime helper. If a correct lowering is unavailable, Native mode must reject the operation rather than approximate its behavior.
+
+## 19. ABI, memory, and host boundaries
+
+The Spike virtual calling convention, native host ABI, and operating-system or firmware service interface are separate contracts. A host ABI such as System V AMD64 may be used for interoperability but does not define Spike function-call semantics. The architecture-neutral virtual ISA does not imply a universal OS-specific syscall instruction.
+
+Virtual registers, virtual stack, and virtual memory are defined independently of host registers and process memory. The backend may use host resources to implement them, but such implementation choices must preserve the specified virtual behavior.
+
+## 20. Normative status of architecture drafts
+
+The architecture overview, ADRs, grammar draft, and ISA draft provide the design baseline for review. Items marked proposed or open are not yet normative language guarantees. Before an instruction or profile is declared supported, its operands, effects, flags, memory behavior, faults, and Quick/Native implementation status must be specified and tested.
+
+## 21. Initial native object strategy
+
+For a hosted Linux x86-64 profile, ELF64 relocatable output with an external linker is the proposed initial strategy. This is not a commitment to a custom linker, Windows PE/COFF, macOS Mach-O, or privileged/freestanding execution in the first milestone.
