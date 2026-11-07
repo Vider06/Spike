@@ -3,7 +3,7 @@ with Machine_State;
 procedure Test_Machine_State is
    use Machine_State;
 
-   State : Machine_State;
+   State : Machine_State.Machine_State;
    Expected_Flags : constant Status_Flags :=
      (Z => True, N => False, C => True, V => False);
 begin
