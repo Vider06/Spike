@@ -17,6 +17,21 @@ is
 
    type Machine_State is private;
 
+   function Get_Register
+     (State : Machine_State;
+      Index : Register_Index) return Word
+     with Global => null;
+
+   function Program_Counter (State : Machine_State) return Word
+     with Global => null;
+
+   function Get_Flags (State : Machine_State) return Status_Flags
+     with Global => null;
+
+   function Current_Status
+     (State : Machine_State) return Execution_Status
+     with Global => null;
+
    function Initial_State return Machine_State
      with
        Global => null,
@@ -39,11 +54,6 @@ is
            (for all Index in Register_Index =>
               Get_Register (State, Index) = 0);
 
-   function Get_Register
-     (State : Machine_State;
-      Index : Register_Index) return Word
-     with Global => null;
-
    procedure Set_Register
      (State : in out Machine_State;
       Index : Register_Index;
@@ -57,9 +67,6 @@ is
          and then Get_Flags (State) = Get_Flags (State'Old)
          and then Current_Status (State) = Current_Status (State'Old);
 
-   function Program_Counter (State : Machine_State) return Word
-     with Global => null;
-
    procedure Set_Program_Counter
      (State : in out Machine_State;
       Value : Word)
@@ -71,9 +78,6 @@ is
          and then Get_Flags (State) = Get_Flags (State'Old)
          and then Current_Status (State) = Current_Status (State'Old);
 
-   function Get_Flags (State : Machine_State) return Status_Flags
-     with Global => null;
-
    procedure Set_Flags
      (State : in out Machine_State;
       Value : Status_Flags)
@@ -84,10 +88,6 @@ is
          Get_Flags (State) = Value
          and then Program_Counter (State) = Program_Counter (State'Old)
          and then Current_Status (State) = Current_Status (State'Old);
-
-   function Current_Status
-     (State : Machine_State) return Execution_Status
-     with Global => null;
 
    procedure Halt (State : in out Machine_State)
      with
