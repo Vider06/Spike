@@ -10,7 +10,6 @@ is
    use type Memory_Model.Memory_Result;
    use type Machine_State.Execution_Status;
    use type Machine_State.Status_Flags;
-   use type Machine_State.Word;
 
    type Stack_Result is
      (Success, Not_Configured, Invalid_Bounds, Stack_Overflow,
