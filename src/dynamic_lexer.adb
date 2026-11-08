@@ -109,7 +109,7 @@ package body Dynamic_Lexer is
             while Last <= Source'Last loop
                if Source (Last) = ASCII.LF or else Source (Last) = ASCII.CR then
                   return Result;
-               elsif Source (Last) = '' then
+               elsif Source (Last) = Character'Val (16#5C#) then
                   Last := Last + 1;
                   if Last > Source'Last then return Result; end if;
                elsif Source (Last) = '"' then
