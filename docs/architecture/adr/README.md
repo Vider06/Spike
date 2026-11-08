@@ -22,5 +22,6 @@ ADRs record decisions affecting Spike's language, virtual ISA, and toolchain. Th
 | 0007 | Separate virtual ABI and host ABI | Accepted boundary; concrete virtual ABI deferred |
 | 0008 | ELF object output and external linking first | Proposed |
 | 0009 | Initial executable subset and machine-state contract | Accepted |
+| 0010 | Bounded memory, stack, and control-flow semantics | Accepted |
 
 New ADRs use the next four-digit number and include context, decision, alternatives, consequences, and follow-up. Accepted decisions are changed through a superseding ADR, not silently rewritten.
