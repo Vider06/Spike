@@ -8,6 +8,7 @@ package Virtual_Memory
 is
    subtype Address is Interfaces.Unsigned_64;
    subtype Byte is Interfaces.Unsigned_8;
+   subtype Word is Interfaces.Unsigned_64;
    use type Address;
 
    type Permissions is record
@@ -50,6 +51,18 @@ is
 
    procedure Fetch_Byte
      (State : Memory; Address_Value : Address; Value : out Byte;
+      Result : out Memory_Result)
+     with Global => null;
+
+   --  Multi-byte values use little-endian byte order. The complete access
+   --  must fit in one mapped region; failed writes never partially mutate.
+   procedure Read_Word
+     (State : Memory; Address_Value : Address; Value : out Word;
+      Result : out Memory_Result)
+     with Global => null;
+
+   procedure Write_Word
+     (State : in out Memory; Address_Value : Address; Value : Word;
       Result : out Memory_Result)
      with Global => null;
 
