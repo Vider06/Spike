@@ -24,6 +24,17 @@ is
      is (Start_Offset <= End_Offset and then End_Offset <= Source_Length)
      with Global => null;
 
+   function Valid_Token_Span
+     (Start_Offset, End_Offset, Lexeme_Length : Natural) return Boolean
+     is (Start_Offset < End_Offset
+         and then End_Offset - Start_Offset = Lexeme_Length)
+     with Global => null;
+
+   function Spans_Are_Ordered
+     (Previous_End, Next_Start : Natural) return Boolean
+     is (Previous_End <= Next_Start)
+     with Global => null;
+
    function Better_Match
      (Candidate_Length  : Natural;
       Candidate_Priority : Integer;
