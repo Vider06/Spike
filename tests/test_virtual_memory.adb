@@ -70,4 +70,14 @@ begin
    Read_Word (State, 70, Value_Word, Result);
    pragma Assert (Result = Success);
    pragma Assert (Value_Word = 16#0123_4567_89AB_CDEF#);
+
+   --  A word crossing a region boundary is rejected without partial writes.
+   Write_Word (State, 121, 16#FFFF_FFFF_FFFF_FFFF#, Result);
+   pragma Assert (Result = Unmapped_Address);
+   Read_Word (State, 120, Value_Word, Result);
+   pragma Assert (Result = Success);
+   pragma Assert (Value_Word = 16#0123_4567_89AB_CDEF#);
+
+   Read_Word (State, 250, Value_Word, Result);
+   pragma Assert (Result = Invalid_Range);
 end Test_Virtual_Memory;
