@@ -152,18 +152,6 @@ package body Lexer_Config is
             Def.Name := Name;
             Def.Matcher := Parse_Matcher (To_String (Matcher_Name));
 
-            if Def.Matcher not in Literal | Line_Comment then
-               for Existing of Result.Definitions loop
-                  if Existing.Matcher = Def.Matcher
-                    and then Existing.Priority = Def.Priority
-                  then
-                     raise Config_Error with
-                       "ambiguous generic matcher priority: "
-                       & To_String (Matcher_Name);
-                  end if;
-               end loop;
-            end if;
-
             Has_Value := Item.Has_Field ("value");
             if Def.Matcher in Literal | Line_Comment then
                if not Has_Value or else Item.Get ("value").Kind /= JSON_String_Type then
@@ -203,6 +191,18 @@ package body Lexer_Config is
                   raise Config_Error with "emit must be boolean";
                end if;
                Def.Emit := Item.Get ("emit").Get;
+            end if;
+
+            if Def.Matcher not in Literal | Line_Comment then
+               for Existing of Result.Definitions loop
+                  if Existing.Matcher = Def.Matcher
+                    and then Existing.Priority = Def.Priority
+                  then
+                     raise Config_Error with
+                       "ambiguous generic matcher priority: "
+                       & To_String (Matcher_Name);
+                  end if;
+               end loop;
             end if;
 
             if Def.Matcher = Literal then
