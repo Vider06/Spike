@@ -4,6 +4,8 @@ package Machine_State
   with SPARK_Mode => On
 is
    subtype Word is Interfaces.Unsigned_64;
+   use type Word;
+
    subtype Register_Index is Natural range 0 .. 15;
 
    type Status_Flags is record
