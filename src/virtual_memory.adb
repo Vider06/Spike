@@ -55,11 +55,6 @@ is
          return;
       end if;
 
-      if State.Count = Max_Regions then
-         Result := Region_Table_Full;
-         return;
-      end if;
-
       for Index in 1 .. State.Count loop
          declare
             Existing : constant Region := State.Regions (Index);
@@ -74,6 +69,11 @@ is
             end if;
          end;
       end loop;
+
+      if State.Count = Max_Regions then
+         Result := Region_Table_Full;
+         return;
+      end if;
 
       State.Count := State.Count + 1;
       State.Regions (State.Count) :=
