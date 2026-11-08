@@ -126,5 +126,37 @@ begin
       Assert (Invalid, "numeric matchers must accept ASCII digits only");
    end;
 
+   declare
+      Priority_Config : constant Lexer_Config.Lexer_Configuration :=
+        Lexer_Config.Validate
+          ("{""schema_version"":""1.0"",""tokens"":["
+           & "{""name"":""LOW"",""matcher"":""identifier"",""priority"":0},"
+           & "{""name"":""HIGH"",""matcher"":""identifier"",""priority"":10}]}");
+      Priority_Stream : Token_Stream.Stream :=
+        Dynamic_Lexer.Tokenize (Priority_Config, "dynamic");
+   begin
+      Token_Stream.Expect (Priority_Stream, "HIGH", Item);
+      Assert (Token_Stream.Remaining (Priority_Stream) = 0,
+              "priority resolves multiple definitions of the same matcher");
+   end;
+
+   declare
+      Invalid : Boolean := False;
+   begin
+      begin
+         declare
+            Bad : constant Lexer_Config.Lexer_Configuration :=
+              Lexer_Config.Validate
+                ("{""schema_version"":""2.0"",""tokens"":["
+                 & "{""name"":""IDENT"",""matcher"":""identifier""}]}");
+         begin
+            pragma Unreferenced (Bad);
+         end;
+      exception
+         when Lexer_Config.Config_Error => Invalid := True;
+      end;
+      Assert (Invalid, "unsupported JSON schema versions must be rejected");
+   end;
+
    Put_Line ("Dynamic lexer tests passed");
 end Test_Dynamic_Lexer;
