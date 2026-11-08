@@ -353,7 +353,7 @@ def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[
     time_limit_events = len(
         re.findall(
             r"\[provers reached [^\]]*time[^\]]*limit before completing the proof\]",
-            combined_text,
+            log_text,
             re.IGNORECASE,
         )
     )
@@ -362,7 +362,7 @@ def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[
             r"\[provers reached [^\]]*(?:time|step|memory)[^\]]*limit before completing the proof\]"
             r"|\[provers gave up before completing the proof\]"
             r"|\b(?:proof|prover) (?:was )?interrupted\b",
-            combined_text,
+            log_text,
             re.IGNORECASE,
         )
     )
