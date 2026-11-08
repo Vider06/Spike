@@ -33,15 +33,17 @@ These commands are design targets; the toolchain is not yet implemented. This VM
 
 The current VM work focuses on architectural semantics and its safety substrate:
 
-- Sixteen independent 64-bit virtual registers, PC, flags, and execution status.
+- Sixteen independent 64-bit virtual registers, PC, SP, flags, and execution status.
 - Deterministic reset and explicit terminal fault state with a structured fault kind.
-- Virtual semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT.
+- Virtual semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, flag-driven branches, and HALT.
+- Bounded downward-growing stack with checked PUSH/POP and stack-backed CALL/RETURN primitives.
 - Finite virtual memory with non-overlapping mapped regions.
 - Independent read, write, and execute permissions, including W^X enforcement.
 - Checked byte reads, writes, and instruction-fetch access.
+- Atomic little-endian 64-bit word reads and writes, with whole-region range validation.
 - Tests for arithmetic boundaries, flag behavior, operand aliasing, memory boundaries, and permission failures.
 
-The instruction package implements semantic operations only. It does not fetch/decode a program, parse source text, or run an interpreter loop. The byte-memory layer does not yet imply multi-byte loads/stores, a stack, calls, branches, or host services. Those require separate architectural decisions.
+The instruction package implements semantic operations only. It does not fetch/decode a program, parse source text, or run an interpreter loop. The VM APIs provide byte/word memory access, a bounded stack, conditional branches, and stack-backed call/return. They are VM primitives only: no source-level instruction encoding, parser, decoder, or interpreter loop is included. Source-level LOAD/STORE forms and host services remain deferred.
 
 ## Documentation
 
