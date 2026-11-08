@@ -8,6 +8,7 @@ package Spike_API is
    --  than importing frontend implementation units directly.
 
    API_Version : constant String := "1.0";
+   function Version return String;
 
    type Token_Info is record
       Kind         : Ada.Strings.Unbounded.Unbounded_String;
