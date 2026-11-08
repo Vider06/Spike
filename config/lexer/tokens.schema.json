@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vider06.github.io/Spike/schemas/lexer-tokens-1.0.schema.json",
+  "title": "Spike Dynamic Lexer Definitions",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "tokens"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "tokens": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "matcher"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+          "matcher": {
+            "enum": [
+              "literal", "identifier", "decimal_integer", "hex_integer",
+              "binary_integer", "quoted_string", "whitespace", "line_comment"
+            ]
+          },
+          "value": {"type": "string", "minLength": 1},
+          "priority": {"type": "integer"},
+          "emit": {"type": "boolean", "default": true}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"matcher": {"const": "literal"}}},
+            "then": {"required": ["value"]}
+          },
+          {
+            "if": {"properties": {"matcher": {"const": "line_comment"}}},
+            "then": {"required": ["value"]}
+          },
+          {
+            "if": {
+              "properties": {
+                "matcher": {"enum": ["identifier", "decimal_integer", "hex_integer", "binary_integer", "quoted_string", "whitespace"]}
+              }
+            },
+            "then": {"not": {"required": ["value"]}}
+          }
+        ]
+      }
+    }
+  }
+}
