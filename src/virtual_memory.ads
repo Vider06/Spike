@@ -67,10 +67,10 @@ private
    type Storage_Array is array (Natural range 0 .. Capacity - 1) of Byte;
 
    type Memory is record
-      Storage : Storage_Array := (others => 0);
-      Regions : Region_Array := (others =>
+      Storage : Storage_Array := [others => 0];
+      Regions : Region_Array := [others =>
         (Start => 0, Length => 0,
-         Rights => (Read => False, Write => False, Execute => False)));
+         Rights => (Read => False, Write => False, Execute => False))];
       Count : Natural range 0 .. Max_Regions := 0;
    end record;
 end Virtual_Memory;
