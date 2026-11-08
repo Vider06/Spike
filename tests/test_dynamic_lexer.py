@@ -25,6 +25,13 @@ class LexerConfigTests(unittest.TestCase):
                 ],
             })
 
+    def test_rejects_unknown_fields(self):
+        with self.assertRaises(ConfigError):
+            validate_config({
+                "schema_version": "1.0",
+                "tokens": [{"name": "WORD", "matcher": "identifier", "regex": ".*"}],
+            })
+
     def test_rejects_unknown_matcher(self):
         with self.assertRaises(ConfigError):
             validate_config({
