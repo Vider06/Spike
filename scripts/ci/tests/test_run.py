@@ -52,7 +52,8 @@ class ProofStatisticsTests(unittest.TestCase):
         report = _proof_report_metrics("GNATprove completed.")
         self.assertIsNone(report["checks_proved"])
         self.assertIsNone(report["checks_not_proved"])
-        self.assertIsNone(report["timeouts_reported"])
+        self.assertEqual(report["proofs_timed_out"], 0)
+        self.assertEqual(report["proofs_interrupted"], 0)
         self.assertIsNone(report["maximum_rss_kib"])
         self.assertEqual(report["provers_detected"], [])
 
@@ -70,6 +71,24 @@ class ProofStatisticsTests(unittest.TestCase):
         self.assertEqual(report["checks_justified"], 19)
         self.assertEqual(report["checks_not_proved"], 0)
         self.assertEqual(report["max_steps_used"], 1234)
+
+    def test_aggregates_proof_checks_per_ada_unit(self) -> None:
+        report = _proof_report_metrics(
+            "src/vm_stack.adb:42:10: info: precondition proved (CVC5: 1 VC, 0.01s, 4 steps)\n"
+            "src/vm_stack.adb:55:10: medium: postcondition might fail\n"
+        )
+        self.assertEqual(
+            report["per_unit_check_counts"],
+            {"vm_stack.adb": {"proved": 1, "not_proved": 1}},
+        )
+
+    def test_counts_explicitly_interrupted_proof_attempts(self) -> None:
+        report = _proof_report_metrics(
+            "vm_stack.adb:55:10: medium: precondition might fail "
+            "[provers reached time and step limit before completing the proof]\n"
+        )
+        self.assertEqual(report["proofs_timed_out"], 1)
+        self.assertEqual(report["proofs_interrupted"], 1)
 
 
 class WorkflowPolicyTests(unittest.TestCase):
