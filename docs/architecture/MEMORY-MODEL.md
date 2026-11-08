@@ -12,7 +12,7 @@ The VM memory package is generic over a finite byte capacity and a finite number
 
 A region has a half-open address interval [start, start + length) and explicit read, write, and execute permissions. Mapping rejects zero-length regions, out-of-capacity ranges, overlapping regions, and write-plus-execute permissions. The range check validates the start first and then checks length against capacity minus start, avoiding overflow during validation.
 
-All reads, writes, and instruction-fetch byte accesses validate the address, require a mapped region, and check the corresponding permission. Failed writes leave storage unchanged. Failed reads return a zero output value and a failure result. Instruction fetch requires execute permission; ordinary reads do not imply execute permission.
+All reads, writes, and instruction-fetch byte accesses validate the address, require a mapped region, and check the corresponding permission. Failed writes leave storage unchanged. Failed reads return a zero output value and a failure result. Instruction fetch requires execute permission; ordinary reads do not imply execute permission. Multi-byte word accesses use little-endian byte order and require the complete eight-byte range to fit inside one mapped region with the requested permission. Validation occurs before any storage mutation, so failed word writes are atomic.
 
 The initial implementation uses a bounded byte array. It deliberately does not expose host addresses, unchecked conversions, or raw storage references.
 
