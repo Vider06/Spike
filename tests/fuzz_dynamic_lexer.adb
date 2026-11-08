@@ -41,7 +41,7 @@ begin
                   Assert (Item.Start_Offset < Item.End_Offset,
                           "fuzz produced an empty token span");
                   Assert (Item.End_Offset - Item.Start_Offset =
-                            Natural (Ada.Strings.Unbounded.Length (Item.Lexeme)),
+                            Ada.Strings.Unbounded.Length (Item.Lexeme),
                           "fuzz token span/lexeme mismatch");
                   if not First_Token then
                      Assert (Previous_End <= Item.Start_Offset,
