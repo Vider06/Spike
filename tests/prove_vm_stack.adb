@@ -10,8 +10,6 @@ is
    package Proof_Stack is new VM_Stack (Proof_Memory);
    use Proof_Memory;
    use Proof_Stack;
-   use type Proof_Memory.Memory_Result;
-   use type Proof_Stack.Stack_Result;
 
    CPU : Machine_State.Machine_State;
    Memory_State : Proof_Memory.Memory;
