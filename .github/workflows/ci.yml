@@ -61,10 +61,8 @@ jobs:
           toolchain: "gnat_native gprbuild"
           cache: true
 
-      - name: Install GNATprove
-        run: |
-          alr install gnatprove
-          echo "$HOME/.alire/bin" >> "$GITHUB_PATH"
+      - name: Resolve Ada and SPARK workspace dependencies
+        run: alr -n update
 
       - name: Compile Ada and run every VM test
         run: alr exec -- python scripts/ci/run.py ada
