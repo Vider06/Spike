@@ -292,7 +292,7 @@ def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[
     prover_names = sorted(
         {
             match.group(0)
-            for match in re.finditer(r"\b(?:Alt-Ergo|CVC5|Z3|Trivial)\b", combined_text, re.IGNORECASE)
+            for match in re.finditer(r"\b(?:Alt-Ergo|CVC5|Z3)\b", combined_text, re.IGNORECASE)
         },
         key=str.casefold,
     )
