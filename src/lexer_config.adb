@@ -92,10 +92,17 @@ package body Lexer_Config is
       end if;
       if not Root.Has_Field ("schema_version")
         or else Root.Get ("schema_version").Kind /= JSON_String_Type
-        or else GNATCOLL.JSON.Get (Root.Get ("schema_version")) /= "1.0"
       then
          raise Config_Error with "schema_version must be exactly 1.0";
       end if;
+      declare
+         Schema_Text : constant String :=
+           GNATCOLL.JSON.Get (Root.Get ("schema_version"));
+      begin
+         if Schema_Text /= "1.0" then
+            raise Config_Error with "schema_version must be exactly 1.0";
+         end if;
+      end;
       if not Root.Has_Field ("tokens")
         or else Root.Get ("tokens").Kind /= JSON_Array_Type
       then
