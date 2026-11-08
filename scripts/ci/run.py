@@ -135,7 +135,7 @@ def workflow_policy_findings(content: str, relative_path: str) -> list[str]:
     if re.search(r"(?m)^\s*(pull_request_target|workflow_run):", content):
         findings.append(f"{relative_path}: privileged trigger is not allowed in this CI workflow")
 
-    action_refs = re.findall(r"(?m)^\s*uses:\s*([^\s#]+)", content)
+    action_refs = re.findall(r"(?m)^\s*(?:-\s*)?uses:\s*([^\s#]+)", content)
     for reference in action_refs:
         if "@" not in reference:
             findings.append(f"{relative_path}: action reference is missing a revision: {reference}")
