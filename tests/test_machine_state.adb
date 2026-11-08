@@ -11,6 +11,8 @@ begin
    Reset (State);
 
    pragma Assert (Program_Counter (State) = 0);
+   pragma Assert (Stack_Pointer (State) = 0);
+   pragma Assert (Stack_Pointer (State) = 0);
    pragma Assert (Current_Status (State) = Running);
    pragma Assert (Last_Fault (State) = No_Fault);
    pragma Assert
@@ -27,8 +29,11 @@ begin
    pragma Assert (Get_Register (State, 1) = 0);
 
    Set_Program_Counter (State, 7);
+   Set_Stack_Pointer (State, 16#1000#);
+   pragma Assert (Stack_Pointer (State) = 16#1000#);
    Set_Flags (State, Expected_Flags);
    pragma Assert (Program_Counter (State) = 7);
+   pragma Assert (Stack_Pointer (State) = 16#1000#);
    pragma Assert (Get_Flags (State) = Expected_Flags);
 
    Halt (State);
@@ -46,6 +51,7 @@ begin
    pragma Assert (Current_Status (State) = Faulted);
    pragma Assert (Last_Fault (State) = Permission_Denied);
    pragma Assert (Program_Counter (State) = 12);
+   pragma Assert (Stack_Pointer (State) = 0);
    pragma Assert (Get_Register (State, 3) = 99);
 
    Reset (State);
