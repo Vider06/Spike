@@ -12,7 +12,6 @@ begin
 
    pragma Assert (Program_Counter (State) = 0);
    pragma Assert (Stack_Pointer (State) = 0);
-   pragma Assert (Stack_Pointer (State) = 0);
    pragma Assert (Current_Status (State) = Running);
    pragma Assert (Last_Fault (State) = No_Fault);
    pragma Assert
