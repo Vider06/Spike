@@ -38,7 +38,7 @@ Implemented now:
 - Deterministic lexer fuzz/regression tests.
 - SPARK contracts and proof harnesses for bounded VM and lexer properties.
 
-Not yet implemented: parser, semantic frontend validation, IR, Quick interpreter loop, native assembler/build pipeline, CLI, and linker integration. The directory structure documents these boundaries without claiming the future components already exist.
+Not yet implemented: parser, semantic frontend validation, IR, Quick interpreter loop, native assembler/build pipeline, CLI, Spike Manager, and linker integration. The initial Ada-facing `Spike_API` facade is implemented for the lexer boundary; it is not yet a user-facing command-line interface. The directory structure documents these boundaries without claiming the future components already exist.
 
 ## Language definition data
 
@@ -48,6 +48,7 @@ The source of truth for the machine-readable language data is [`src/leng/languag
 
 ```text
 src/
+  api/                  # implemented: stable Ada-facing toolchain facade
   frontend/
     lexer/              # implemented: JSON-driven lexer and token stream
     parser/              # planned parser boundary
@@ -67,6 +68,7 @@ src/
       linker/            # planned linker integration
   leng/                  # language JSON manifest, definitions, schemas
 tests/
+  api/                  # public API contract tests
   frontend/lexer/
   backend/vm/
   proofs/frontend/
@@ -92,6 +94,7 @@ Ada source paths are mirrored by the test and proof areas. The GPR project file 
 
 - [Language specification](specification/SPECIFICATION.md)
 - [Architecture overview](docs/architecture/OVERVIEW.md)
+- [Public API boundary](docs/architecture/API.md)
 - [Architecture decision records](docs/architecture/adr/README.md)
 - [Virtual ISA 0.1](docs/isa/ISA-0.1.md)
 - [Custom syntax and grammar draft](docs/language/GRAMMAR-0.1.md)
