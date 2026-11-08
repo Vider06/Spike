@@ -113,6 +113,79 @@ is
       end if;
    end Write_Byte;
 
+   function Find_Region_For_Range
+     (State : Memory; Start : Address; Length : Address) return Natural
+   is
+   begin
+      if Length = 0
+        or else Start >= Address (Capacity)
+        or else Length > Address (Capacity) - Start
+      then
+         return 0;
+      end if;
+
+      for Index in 1 .. State.Count loop
+         declare
+            Item : constant Region := State.Regions (Index);
+         begin
+            if Start >= Item.Start
+              and then Start - Item.Start < Item.Length
+              and then Length <= Item.Length - (Start - Item.Start)
+            then
+               return Index;
+            end if;
+         end;
+      end loop;
+      return 0;
+   end Find_Region_For_Range;
+
+   procedure Read_Word
+     (State : Memory; Address_Value : Address; Value : out Word;
+      Result : out Memory_Result)
+   is
+      Index : constant Natural := Find_Region_For_Range (State, Address_Value, 8);
+   begin
+      Value := 0;
+      if Address_Value >= Address (Capacity)
+        or else Address (8) > Address (Capacity) - Address_Value
+      then
+         Result := Invalid_Range;
+      elsif Index = 0 then
+         Result := Unmapped_Address;
+      elsif not State.Regions (Index).Rights.Read then
+         Result := Permission_Denied;
+      else
+         for Offset in 0 .. 7 loop
+            Value := Value or Interfaces.Shift_Left
+              (Word (State.Storage (Natural (Address_Value) + Offset)), Offset * 8);
+         end loop;
+         Result := Success;
+      end if;
+   end Read_Word;
+
+   procedure Write_Word
+     (State : in out Memory; Address_Value : Address; Value : Word;
+      Result : out Memory_Result)
+   is
+      Index : constant Natural := Find_Region_For_Range (State, Address_Value, 8);
+   begin
+      if Address_Value >= Address (Capacity)
+        or else Address (8) > Address (Capacity) - Address_Value
+      then
+         Result := Invalid_Range;
+      elsif Index = 0 then
+         Result := Unmapped_Address;
+      elsif not State.Regions (Index).Rights.Write then
+         Result := Permission_Denied;
+      else
+         for Offset in 0 .. 7 loop
+            State.Storage (Natural (Address_Value) + Offset) := Byte
+              (Interfaces.Shift_Right (Value, Offset * 8) and 16#FF#);
+         end loop;
+         Result := Success;
+      end if;
+   end Write_Word;
+
    procedure Fetch_Byte
      (State : Memory; Address_Value : Address; Value : out Byte;
       Result : out Memory_Result)
