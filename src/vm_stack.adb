@@ -1,7 +1,6 @@
 package body VM_Stack
   with SPARK_Mode => On
 is
-   use type Memory_Model.Memory_Result;
 
    procedure Configure
      (State : out Stack;
