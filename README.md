@@ -45,6 +45,7 @@ The instruction package implements semantic operations only. It does not fetch/d
 
 ## Documentation
 
+- [Continuous integration and verification gates](docs/CI.md)
 - [Language specification](specification/SPECIFICATION.md)
 - [Architecture overview](docs/architecture/OVERVIEW.md)
 - [Architecture decision records](docs/architecture/adr/README.md)
