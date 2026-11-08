@@ -4,7 +4,7 @@
 
 ## Machine state
 
-The architectural register state is defined by [ISA 0.1](../isa/ISA-0.1.md) and [ADR 0009](adr/0009-initial-executable-subset.md): sixteen 64-bit GPRs, instruction-index PC, Z/N/C/V flags, and RUNNING/HALTED/FAULTED execution state.
+The architectural register state is defined by [ISA 0.1](../isa/ISA-0.1.md), [ADR 0009](adr/0009-initial-executable-subset.md), and [ADR 0010](adr/0010-memory-stack-and-control-flow.md): sixteen 64-bit GPRs, instruction-index PC, byte-address SP, Z/N/C/V flags, and RUNNING/HALTED/FAULTED execution state.
 
 ## Bounded virtual memory
 
@@ -26,7 +26,10 @@ The implementation uses a bounded byte array. It deliberately does not expose ho
 - Byte access is independent of host endianness; multi-byte words have explicit little-endian encoding and all-or-nothing writes.
 - The stack pointer is architectural machine state; stack bounds are separate, explicit, and checked on every push/pop.
 - Stack operations update SP only after the corresponding memory access succeeds.
+- The stack grows downward in an explicitly configured, eight-byte-aligned half-open interval.
+- CALL saves the already-advanced instruction-index PC; RETURN restores it from the bounded stack.
+- Branch conditions read Z/N/C/V without modifying flags.
 
 ## Deferred
 
-Dynamic allocation, paging, concurrency, and system services remain deferred. Call/return integration and final instruction-address semantics remain open VM work.
+Source-level LOAD/STORE forms, dynamic allocation, paging, concurrency, and system services remain deferred. Memory-operation integration with machine state and final fault propagation policy remain open VM work.
