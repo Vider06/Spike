@@ -2,6 +2,8 @@
 
 Spike source code is grouped by architectural responsibility:
 
+- [api/](api/) exposes the stable Ada-facing entry points for clients such as the future Manager.
+
 - [frontend/](frontend/README.md) turns source text into validated intermediate representation.
 - [backend/](backend/README.md) consumes that representation through independent execution/build backends.
 - [leng/](leng/README.md) contains the machine-readable language definition and its JSON modules.
