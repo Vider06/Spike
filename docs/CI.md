@@ -28,7 +28,9 @@ The build uses Ada 2022, assertions, validity checks, overflow checks, all GNAT 
 - `prove_virtual_memory` (a SPARK instantiation harness and memory smoke test)
 - `prove_vm_stack` (a SPARK instantiation harness for stack and call/return)
 
-GNATprove analyzes the machine-state and instruction implementation units plus concrete SPARK harnesses that instantiate the generic memory and stack packages. Runtime test mains are compiled and executed separately; they are not treated as formal proof harnesses. The proof gate uses full legality/flow/proof mode, proof level 2, warnings-as-errors, and unproved-checks-as-errors. It cannot pass merely because GNATprove exits successfully without proving its generated checks.
+GNATprove analyzes the machine-state and instruction implementation units plus concrete SPARK harnesses that instantiate the generic memory and stack packages. Runtime test mains are compiled and executed separately; they are not treated as formal proof harnesses. The proof gate uses full legality/flow/proof mode, proof level 2, a bounded 10-second per-check timeout, warnings-as-errors, and unproved-checks-as-errors. The timeout is deliberately bounded rather than the previous 120-second override, which made a failed proof run consume a disproportionate amount of CI time. The gate cannot pass merely because GNATprove exits successfully without proving its generated checks.
+
+The proof invocation records total elapsed time, the maximum resident memory reported by GNU time when available, prover names and proof counters when GNATprove emits them, the requested/observed units, the exact command, commit, and workflow run metadata. It writes `build/ci/gnatprove-statistics.json` and a concise GitHub Actions step summary. The log and JSON report are uploaded as the `spark-proof-report` artifact for 90 days, allowing run-to-run comparison. Metrics that GNATprove does not emit (notably per-unit/per-prover wall-clock timings) are explicitly marked unavailable rather than estimated; the full raw log is retained for later analysis.
 
 ## Run locally
 
