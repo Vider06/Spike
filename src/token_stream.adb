@@ -17,7 +17,7 @@ package body Token_Stream is
             raise Invalid_Stream with "token span lies outside the source buffer";
          end if;
          if not Lexer_Properties.Valid_Token_Span
-           (Item.Start_Offset, Item.End_Offset, Natural (Length (Item.Lexeme)))
+           (Item.Start_Offset, Item.End_Offset, Length (Item.Lexeme))
          then
             raise Invalid_Stream with "token span does not match its lexeme length";
          end if;
