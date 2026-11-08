@@ -65,7 +65,7 @@ is
        Global => null,
        Pre => Offset <= Source_Length
          and then Amount <= Source_Length - Offset,
-       Post => Offset = Offset'Old + Amount'Old
+       Post => Offset = Offset'Old + Amount
          and then Offset <= Source_Length;
 
    procedure Advance_Cursor (Cursor : in out Natural; Token_Count : Natural)
