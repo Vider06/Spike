@@ -14,21 +14,19 @@ is
         (Registers => (others => 0),
          PC        => 0,
          Flags     => (Z => False, N => False, C => False, V => False),
-         Status    => Running);
+         Status    => Running,
+         Fault     => No_Fault);
    end Reset;
 
    function Get_Register
-     (State : Machine_State;
-      Index : Register_Index) return Word
+     (State : Machine_State; Index : Register_Index) return Word
    is
    begin
       return State.Registers (Index);
    end Get_Register;
 
    procedure Set_Register
-     (State : in out Machine_State;
-      Index : Register_Index;
-      Value : Word)
+     (State : in out Machine_State; Index : Register_Index; Value : Word)
    is
    begin
       State.Registers (Index) := Value;
@@ -40,8 +38,7 @@ is
    end Program_Counter;
 
    procedure Set_Program_Counter
-     (State : in out Machine_State;
-      Value : Word)
+     (State : in out Machine_State; Value : Word)
    is
    begin
       State.PC := Value;
@@ -53,22 +50,32 @@ is
    end Get_Flags;
 
    procedure Set_Flags
-     (State : in out Machine_State;
-      Value : Status_Flags)
+     (State : in out Machine_State; Value : Status_Flags)
    is
    begin
       State.Flags := Value;
    end Set_Flags;
 
-   function Current_Status
-     (State : Machine_State) return Execution_Status
-   is
+   function Current_Status (State : Machine_State) return Execution_Status is
    begin
       return State.Status;
    end Current_Status;
+
+   function Last_Fault (State : Machine_State) return Fault_Kind is
+   begin
+      return State.Fault;
+   end Last_Fault;
 
    procedure Halt (State : in out Machine_State) is
    begin
       State.Status := Halted;
    end Halt;
+
+   procedure Raise_Fault
+     (State : in out Machine_State; Reason : Fault_Kind)
+   is
+   begin
+      State.Status := Faulted;
+      State.Fault := Reason;
+   end Raise_Fault;
 end Machine_State;
