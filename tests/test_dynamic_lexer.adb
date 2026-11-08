@@ -158,5 +158,96 @@ begin
       Assert (Invalid, "unsupported JSON schema versions must be rejected");
    end;
 
+   declare
+      Invalid_Items : Token_Stream.Token_Vectors.Vector;
+      Invalid : Boolean := False;
+   begin
+      Invalid_Items.Append
+        (Token_Stream.Token'
+           (Kind => To_Unbounded_String ("BROKEN"),
+            Lexeme => To_Unbounded_String ("x"),
+            Value => To_Unbounded_String ("x"),
+            Start_Offset => 2,
+            End_Offset => 1,
+            Line => 1,
+            Column => 1));
+      begin
+         declare
+            Bad_Stream : constant Token_Stream.Stream :=
+              Token_Stream.Create (Invalid_Items);
+         begin
+            pragma Unreferenced (Bad_Stream);
+         end;
+      exception
+         when Token_Stream.Invalid_Stream => Invalid := True;
+      end;
+      Assert (Invalid, "stream creation rejects invalid token spans");
+   end;
+
+   declare
+      Probe : Token_Stream.Stream := Dynamic_Lexer.Tokenize (Config, "a b");
+      First : constant Token_Stream.Token := Token_Stream.Peek (Probe);
+   begin
+      Assert (To_String (First.Value) = "a", "peek does not consume");
+      Assert (Token_Stream.Position (Probe) = 0, "peek preserves cursor");
+      Token_Stream.Consume (Probe, Item);
+      Token_Stream.Reset (Probe);
+      Assert (Token_Stream.Position (Probe) = 0, "reset restores cursor");
+      Assert (To_String (Token_Stream.Peek (Probe).Value) = "a",
+              "peek after reset returns first token");
+      begin
+         declare
+            Past_End : constant Token_Stream.Token :=
+              Token_Stream.Peek (Probe, Natural'Last);
+         begin
+            pragma Unreferenced (Past_End);
+            raise Program_Error with "oversized lookahead unexpectedly succeeded";
+         end;
+      exception
+         when Token_Stream.End_Of_Stream => null;
+      end;
+   end;
+
+   declare
+      Maximal_Config : constant Lexer_Config.Lexer_Configuration :=
+        Lexer_Config.Validate
+          ("{""schema_version"":""1.0"",""tokens"":["
+           & "{""name"":""GT"",""matcher"":""literal"",""value"":"">""},"
+           & "{""name"":""SHIFT"",""matcher"":""literal"",""value"":"">>""},"
+           & "{""name"":""SPACE"",""matcher"":""whitespace"",""emit"":false}]}");
+      Maximal : Token_Stream.Stream :=
+        Dynamic_Lexer.Tokenize (Maximal_Config, ">>");
+   begin
+      Token_Stream.Expect (Maximal, "SHIFT", Item);
+      Assert (Token_Stream.Remaining (Maximal) = 0,
+              "maximal munch chooses the longest configured literal");
+   end;
+
+   declare
+      CRLF_Stream : Token_Stream.Stream :=
+        Dynamic_Lexer.Tokenize (Config, "alpha" & ASCII.CR & ASCII.LF & "beta");
+   begin
+      Token_Stream.Expect (CRLF_Stream, "IDENTIFIER", Item);
+      Token_Stream.Expect (CRLF_Stream, "IDENTIFIER", Item);
+      Assert (Item.Line = 2 and Item.Column = 1,
+              "CRLF advances to the next source line");
+   end;
+
+   declare
+      Invalid : Boolean := False;
+   begin
+      begin
+         declare
+            Bad : constant Token_Stream.Stream :=
+              Dynamic_Lexer.Tokenize (Config, """unterminated");
+         begin
+            pragma Unreferenced (Bad);
+         end;
+      exception
+         when Dynamic_Lexer.Lexical_Error => Invalid := True;
+      end;
+      Assert (Invalid, "unterminated quoted strings are rejected");
+   end;
+
    Put_Line ("Dynamic lexer tests passed");
 end Test_Dynamic_Lexer;
