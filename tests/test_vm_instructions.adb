@@ -63,6 +63,6 @@ begin
    pragma Assert
      (Get_Flags (State) = (Z => True, N => True, C => True, V => True));
 
-   Halt (State);
+   VM_Instructions.Halt (State);
    pragma Assert (Current_Status (State) = Halted);
 end Test_VM_Instructions;
