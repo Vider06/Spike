@@ -10,7 +10,7 @@ procedure Test_VM_Instructions is
 begin
    Reset (State);
 
-   Set_Register (State, 1, Machine_State.Word'Last);
+   Set_Register (State, 1, Machine_State.Machine_State.Word'Last);
    Set_Register (State, 2, 1);
    VM_Instructions.Add (State, 3, 1, 2);
    pragma Assert (Get_Register (State, 3) = 0);
@@ -29,7 +29,7 @@ begin
    Set_Register (State, 1, 0);
    Set_Register (State, 2, 1);
    VM_Instructions.Sub (State, 1, 1, 2);
-   pragma Assert (Get_Register (State, 1) = Word'Last);
+   pragma Assert (Get_Register (State, 1) = Machine_State.Word'Last);
    Flags := Get_Flags (State);
    pragma Assert (Flags.N and Flags.C and not Flags.V and not Flags.Z);
 
