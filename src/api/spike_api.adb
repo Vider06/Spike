@@ -5,6 +5,8 @@ with Token_Stream;
 package body Spike_API is
    use Ada.Strings.Unbounded;
 
+   function Version return String is (API_Version);
+
    function Load_Lexer_Configuration
      (Path : String) return Lexer_Config.Lexer_Configuration
    is (Lexer_Config.Load (Path));
