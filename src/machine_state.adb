@@ -11,7 +11,7 @@ is
    procedure Reset (State : out Machine_State) is
    begin
       State :=
-        (Registers => (others => 0),
+        (Registers => [others => 0],
          PC        => 0,
          Flags     => (Z => False, N => False, C => False, V => False),
          Status    => Running,
