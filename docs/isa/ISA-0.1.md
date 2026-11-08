@@ -1,6 +1,6 @@
 # Spike Virtual ISA 0.1
 
-**Status:** Normative initial executable subset; extensions remain proposals.
+**Status:** Normative virtual machine state and initial executable semantics; source-level encoding remains a later language decision.
 
 ## 1. Machine state
 
@@ -10,12 +10,13 @@ The initial machine state contains:
 |---|---|
 | GPRs | Sixteen unsigned 64-bit registers, R0 through R15 |
 | PC | Unsigned 64-bit instruction index |
+| SP | Unsigned 64-bit byte address for the bounded virtual stack |
 | Flags | Z (zero), N (negative/sign), C (carry/borrow), V (signed overflow) |
 | Execution | RUNNING, HALTED, or FAULTED |
 
-All GPRs, flags, and PC are independent of host CPU registers and flags. There is no implicit alias to x86-64 registers.
+All GPRs, PC, SP, and flags are independent of host CPU registers and flags. There is no implicit alias to x86-64 registers.
 
-The initial state is deterministic: all GPRs are zero, PC is zero, all flags are clear, and execution is RUNNING.
+The initial state is deterministic: all GPRs are zero, PC and SP are zero, all flags are clear, and execution is RUNNING. Configuring a stack sets SP to its exclusive upper bound.
 
 The PC addresses entries in the validated instruction sequence, not byte offsets in source text or native machine code. The execution engine fetches the instruction at PC and advances PC to the following instruction before applying that instruction's operation. Consequently, after HALT, PC identifies the instruction following HALT.
 
@@ -81,12 +82,32 @@ Each instruction is one architectural state transition. Its defined register, fl
 
 An instruction may execute only when the machine is RUNNING. Attempting to step a HALTED or FAULTED machine is rejected by the execution API and does not mutate the state.
 
-## 6. Explicitly outside this subset
+## 6. VM substrate operations
 
-Memory access, LOAD/STORE, stack operations, SP/BP, branches, CALL/RET, multiplication/division, shifts, comparisons, system calls, privileged instructions, and pseudo-instructions are not part of this initial executable subset.
+The following semantics are implemented as VM APIs. They do not imply a source grammar, serialized instruction encoding, decoder, or execution loop.
 
-They must not be accepted as executable instructions until their semantics are specified in a later ADR/specification update.
+### Branch conditions
 
-## 7. Encoding independence
+The VM branch primitive supports unconditional, zero-set, zero-clear, negative-set, negative-clear, carry-set, carry-clear, overflow-set, and overflow-clear conditions. A branch updates PC to the target only when its condition is true. It never changes flags.
+
+### Bounded stack
+
+The stack is a separately configured half-open byte interval [lower, upper). Both bounds are eight-byte aligned and the interval contains at least one word. The stack grows downward. Configuration sets SP to upper, which is the exclusive upper bound and the next free position.
+
+PUSH computes SP - 8, writes one little-endian 64-bit word, and commits the new SP only after the complete memory write succeeds. POP reads one word at SP and increments SP by 8 only after the complete memory read succeeds. Bounds, alignment, mapping, and permissions are checked; failed accesses leave SP unchanged.
+
+### CALL and RETURN
+
+The VM step contract advances PC to the following instruction before applying the operation. CALL therefore pushes the current PC value (the already advanced return instruction index) and then sets PC to the target. RETURN pops that saved instruction index and restores PC. A failed stack operation leaves PC unchanged.
+
+### Word memory access
+
+The bounded memory API supports little-endian 64-bit word reads and writes. The full eight-byte range must fit inside one mapped region with the requested permission. The entire range is validated before a write, so a failed write cannot partially mutate memory.
+
+## 7. Explicitly deferred
+
+Source-level LOAD/STORE instruction forms, multiplication/division, shifts, comparisons, system calls, privileged instructions, pseudo-instructions, and instruction encodings remain deferred. They require separate architectural decisions and must not be inferred from host behavior.
+
+## 8. Encoding independence
 
 This document defines virtual behavior, not x86 opcode encodings and not a serialized bytecode format. Quick mode and any future Native backend must implement this contract. Native lowering may use multiple host instructions, but it may not change the observable virtual state.
