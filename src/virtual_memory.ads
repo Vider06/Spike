@@ -10,7 +10,6 @@ is
    subtype Byte is Interfaces.Unsigned_8;
    subtype Word is Interfaces.Unsigned_64;
    use type Address;
-   use type Word;
 
    type Permissions is record
       Read    : Boolean := False;
