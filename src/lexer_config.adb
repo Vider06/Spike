@@ -144,6 +144,15 @@ package body Lexer_Config is
             Def.Name := Name;
             Def.Matcher := Parse_Matcher (To_String (Matcher_Name));
 
+            if Def.Matcher not in Literal | Line_Comment then
+               for Existing of Result.Definitions loop
+                  if Existing.Matcher = Def.Matcher then
+                     raise Config_Error with
+                       "duplicate generic matcher: " & To_String (Matcher_Name);
+                  end if;
+               end loop;
+            end if;
+
             Has_Value := Item.Has_Field ("value");
             if Def.Matcher in Literal | Line_Comment then
                if not Has_Value or else Item.Get ("value").Kind /= JSON_String_Type

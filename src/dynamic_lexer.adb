@@ -6,6 +6,11 @@ package body Dynamic_Lexer is
    use Lexer_Config;
    use Token_Stream;
 
+   type Character_Buckets is
+     array (Character) of Lexer_Config.Definition_Vectors.Vector;
+   type Matcher_Buckets is
+     array (Lexer_Config.Matcher_Kind) of Lexer_Config.Definition_Vectors.Vector;
+
    type Candidate is record
       Found    : Boolean := False;
       Def      : Token_Definition;
@@ -148,35 +153,78 @@ package body Dynamic_Lexer is
       Column : Positive := 1;
       Best   : Candidate;
       Tied   : Boolean;
+
+      Literals_And_Comments : Character_Buckets;
+      Generic_Matchers : Matcher_Buckets;
+
+      procedure Consider (Def : Token_Definition) is
+         Current : constant Candidate := Match (Def, Source, Source'First + Offset);
+      begin
+         if Current.Found then
+            if not Best.Found or else Lexer_Properties.Better_Match
+              (Current.Length, Current.Def.Priority,
+               Best.Length, Best.Def.Priority)
+            then
+               Best := Current;
+               Tied := False;
+            elsif Current.Length = Best.Length
+              and then Current.Def.Priority = Best.Def.Priority
+            then
+               Tied := True;
+            end if;
+         end if;
+      end Consider;
    begin
       if Source'Length > 16 * 1_024 * 1_024 then
          raise Lexical_Error with "source exceeds the 16 MiB lexer input limit";
       end if;
+
+      for Def of Configuration.Definitions loop
+         if Def.Matcher in Literal | Line_Comment then
+            declare
+               Pattern : constant String := To_String (Def.Value);
+            begin
+               Literals_And_Comments (Pattern (Pattern'First)).Append (Def);
+            end;
+         else
+            Generic_Matchers (Def.Matcher).Append (Def);
+         end if;
+      end loop;
+
       while Offset < Source'Length loop
          declare
             At : constant Positive := Source'First + Offset;
          begin
             Best := (others => <>);
             Tied := False;
-            for Def of Configuration.Definitions loop
-               declare
-                  Current : constant Candidate := Match (Def, Source, At);
-               begin
-                  if Current.Found then
-                     if not Best.Found or else Lexer_Properties.Better_Match
-                       (Current.Length, Current.Def.Priority,
-                        Best.Length, Best.Def.Priority)
-                     then
-                        Best := Current;
-                        Tied := False;
-                     elsif Current.Length = Best.Length
-                       and then Current.Def.Priority = Best.Def.Priority
-                     then
-                        Tied := True;
-                     end if;
-                  end if;
-               end;
+
+            for Def of Literals_And_Comments (Source (At)) loop
+               Consider (Def);
             end loop;
+
+            if Lexer_Properties.Is_Identifier_Start (Source (At)) then
+               for Def of Generic_Matchers (Identifier) loop
+                  Consider (Def);
+               end loop;
+            elsif Lexer_Properties.Is_ASCII_Digit (Source (At)) then
+               for Def of Generic_Matchers (Decimal_Integer) loop
+                  Consider (Def);
+               end loop;
+               for Def of Generic_Matchers (Hex_Integer) loop
+                  Consider (Def);
+               end loop;
+               for Def of Generic_Matchers (Binary_Integer) loop
+                  Consider (Def);
+               end loop;
+            elsif Source (At) = '"' then
+               for Def of Generic_Matchers (Quoted_String) loop
+                  Consider (Def);
+               end loop;
+            elsif Is_Space (Source (At)) then
+               for Def of Generic_Matchers (Whitespace) loop
+                  Consider (Def);
+               end loop;
+            end if;
 
             if not Best.Found then
                raise Lexical_Error with "unrecognized byte at "
