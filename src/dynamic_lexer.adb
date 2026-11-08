@@ -203,8 +203,9 @@ package body Dynamic_Lexer is
             then
                Best := Current;
                Tied := False;
-            elsif Current.Length = Best.Length
-              and then Current.Def.Priority = Best.Def.Priority
+            elsif Lexer_Properties.Match_Tied
+              (Current.Length, Current.Def.Priority,
+               Best.Length, Best.Def.Priority)
             then
                Tied := True;
             end if;
