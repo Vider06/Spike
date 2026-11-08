@@ -341,6 +341,6 @@ package body Dynamic_Lexer is
               (Offset, Best.Length, Source'Length);
          end;
       end loop;
-      return Token_Stream.Create (Output);
+      return Token_Stream.Create (Output, Source'Length);
    end Tokenize;
 end Dynamic_Lexer;
