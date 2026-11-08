@@ -14,18 +14,20 @@ The initial register state and semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, a
 
 Implemented in the VM-only work branch:
 
-- Sixteen virtual registers, PC, flags, execution status, and structured terminal fault state.
+- Sixteen virtual registers, PC, SP, flags, execution status, and structured terminal fault state.
 - Deterministic initialization and reset.
 - Finite virtual byte memory with an explicitly bounded region table.
 - Non-overlapping mapped regions with read, write, and execute permissions.
 - W^X enforcement and checked byte reads, writes, and instruction fetches.
-- Tests for region boundaries, overlap, unmapped addresses, permission failures, and fault-state invariants.
+- Checked little-endian 64-bit reads/writes with whole-range validation and atomic failure.
+- A bounded memory-backed stack with overflow/underflow checks and permission enforcement.
+- Tests for region boundaries, overlap, unmapped addresses, permission failures, stack bounds, and fault-state invariants.
 
 The code and proof status still require compiler and GNATprove execution before this phase can be declared verified.
 
 ## Phase 3 — VM semantic operations
 
-The VM operation package implements MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT directly against machine state. It does not parse source, decode instruction bytes, or run a program loop.
+The VM operation package implements MOV, ADD, SUB, AND, OR, XOR, NOT, flag-driven conditional branches, unconditional branches, and HALT directly against machine state. It does not parse source, decode instruction bytes, or run a program loop.
 
 Remaining work in this phase is verification: compile the packages, execute the test mains, run GNATprove, and address any diagnostics.
 
@@ -35,7 +37,7 @@ Implement lexer, parser, semantic validation, validated instruction records, and
 
 ## Phase 5 — Memory and control-flow extensions
 
-Specify and implement multi-byte loads/stores, stack behavior, branches, and calls in dependency order. Each feature requires normative semantics and tests before implementation.
+Multi-byte word access, stack behavior, and flag-driven branch primitives are implemented. The remaining VM work is call/return integration, instruction-address semantics, and any additional primitive required by the interpreter-host contract. Each feature requires normative semantics and tests before implementation.
 
 ## Phase 6 — x86-64 backend
 
