@@ -12,21 +12,25 @@ is
         (Storage => (others => 0),
          Regions => (others =>
            (Start => 0, Length => 0,
-            Access => (Read => False, Write => False, Execute => False))),
+            Rights => (Read => False, Write => False, Execute => False))),
          Count => 0);
    end Initialize;
 
-   function Contains (Item : Region; At : Address) return Boolean is
+   function Contains
+     (Item : Region; Address_Value : Address) return Boolean
+   is
    begin
       return Item.Length > 0
-        and then At >= Item.Start
-        and then At - Item.Start < Item.Length;
+        and then Address_Value >= Item.Start
+        and then Address_Value - Item.Start < Item.Length;
    end Contains;
 
-   function Find_Region (State : Memory; At : Address) return Natural is
+   function Find_Region
+     (State : Memory; Address_Value : Address) return Natural
+   is
    begin
       for Index in 1 .. State.Count loop
-         if Contains (State.Regions (Index), At) then
+         if Contains (State.Regions (Index), Address_Value) then
             return Index;
          end if;
       end loop;
@@ -37,26 +41,25 @@ is
      (State : in out Memory;
       Start : Address;
       Length : Address;
-      Access : Permissions;
+      Rights : Permissions;
       Result : out Memory_Result)
    is
       Finish : Address;
    begin
-      if Length = 0
-        or else Start >= Address (Capacity)
+      if Start >= Address (Capacity)
         or else Length > Address (Capacity) - Start
       then
          Result := Invalid_Range;
          return;
       end if;
 
-      if Access.Write and Access.Execute then
+      if Rights.Write and Rights.Execute then
          Result := Write_Execute_Violation;
          return;
       end if;
 
       if State.Count = Max_Regions then
-         Result := Invalid_Range;
+         Result := Region_Table_Full;
          return;
       end if;
 
@@ -76,62 +79,62 @@ is
 
       State.Count := State.Count + 1;
       State.Regions (State.Count) :=
-        (Start => Start, Length => Length, Access => Access);
+        (Start => Start, Length => Length, Rights => Rights);
       Result := Success;
    end Map_Region;
 
    procedure Read_Byte
-     (State : Memory; At : Address; Value : out Byte;
+     (State : Memory; Address_Value : Address; Value : out Byte;
       Result : out Memory_Result)
    is
-      Index : constant Natural := Find_Region (State, At);
+      Index : constant Natural := Find_Region (State, Address_Value);
    begin
       Value := 0;
-      if At >= Address (Capacity) then
+      if Address_Value >= Address (Capacity) then
          Result := Invalid_Range;
       elsif Index = 0 then
          Result := Unmapped_Address;
-      elsif not State.Regions (Index).Access.Read then
+      elsif not State.Regions (Index).Rights.Read then
          Result := Permission_Denied;
       else
-         Value := State.Storage (Natural (At));
+         Value := State.Storage (Natural (Address_Value));
          Result := Success;
       end if;
    end Read_Byte;
 
    procedure Write_Byte
-     (State : in out Memory; At : Address; Value : Byte;
+     (State : in out Memory; Address_Value : Address; Value : Byte;
       Result : out Memory_Result)
    is
-      Index : constant Natural := Find_Region (State, At);
+      Index : constant Natural := Find_Region (State, Address_Value);
    begin
-      if At >= Address (Capacity) then
+      if Address_Value >= Address (Capacity) then
          Result := Invalid_Range;
       elsif Index = 0 then
          Result := Unmapped_Address;
-      elsif not State.Regions (Index).Access.Write then
+      elsif not State.Regions (Index).Rights.Write then
          Result := Permission_Denied;
       else
-         State.Storage (Natural (At)) := Value;
+         State.Storage (Natural (Address_Value)) := Value;
          Result := Success;
       end if;
    end Write_Byte;
 
    procedure Fetch_Byte
-     (State : Memory; At : Address; Value : out Byte;
+     (State : Memory; Address_Value : Address; Value : out Byte;
       Result : out Memory_Result)
    is
-      Index : constant Natural := Find_Region (State, At);
+      Index : constant Natural := Find_Region (State, Address_Value);
    begin
       Value := 0;
-      if At >= Address (Capacity) then
+      if Address_Value >= Address (Capacity) then
          Result := Invalid_Range;
       elsif Index = 0 then
          Result := Unmapped_Address;
-      elsif not State.Regions (Index).Access.Execute then
+      elsif not State.Regions (Index).Rights.Execute then
          Result := Permission_Denied;
       else
-         Value := State.Storage (Natural (At));
+         Value := State.Storage (Natural (Address_Value));
          Result := Success;
       end if;
    end Fetch_Byte;
