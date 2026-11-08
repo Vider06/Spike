@@ -4,11 +4,11 @@ package VM_Instructions
   with SPARK_Mode => On
 is
    subtype Register_Index is Machine_State.Register_Index;
-   subtype Word is Machine_State.Word;
    use type Machine_State.Word;
+   use type Machine_State.Status_Flags;
    use type Machine_State.Execution_Status;
 
-   Sign_Mask : constant Word := 16#8000_0000_0000_0000#;
+   Sign_Mask : constant Machine_State.Word := 16#8000_0000_0000_0000#;
 
    procedure Mov
      (State : in out Machine_State.Machine_State;
