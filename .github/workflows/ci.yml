@@ -74,11 +74,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: spark-proof-report
-          path: |
-            build/ci/gnatprove.log
-            build/ci/gnatprove-statistics.json
-            build/ci/gnatprove-summary.out
+          name: vm-ci-diagnostics
+          path: build/ci/
           if-no-files-found: warn
           retention-days: 90
 
