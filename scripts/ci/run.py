@@ -11,8 +11,11 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -283,6 +286,108 @@ def run_ada() -> None:
         execute(f"Run {test_name}", [str(executable)], log_name=f"{test_name}.log")
 
 
+def _proof_report_metrics(log_text: str) -> dict[str, object]:
+    """Extract only statistics explicitly present in GNATprove/time output."""
+    prover_names = sorted(
+        {
+            match.group(0)
+            for match in re.finditer(r"\b(?:Alt-Ergo|CVC5|Z3)\b", log_text, re.IGNORECASE)
+        },
+        key=str.casefold,
+    )
+    observed_units = sorted(
+        {
+            unit
+            for unit in SPARK_UNITS
+            if re.search(rf"(?<![\w-]){re.escape(unit)}(?![\w-])", log_text, re.IGNORECASE)
+        }
+    )
+
+    def reported_count(patterns: tuple[str, ...]) -> int | None:
+        for pattern in patterns:
+            match = re.search(pattern, log_text, re.IGNORECASE)
+            if match:
+                return int(match.group(1).replace(",", ""))
+        return None
+
+    maximum_rss = re.search(
+        r"Maximum resident set size \(kbytes\):\s*(\d+)", log_text, re.IGNORECASE
+    )
+    summary_lines = [
+        line.strip()
+        for line in log_text.splitlines()
+        if re.search(
+            r"statistics|checks? proved|checks? not proved|checks? unproved|"
+            r"timed? out|timeout|proof attempts|prover|verification condition",
+            line,
+            re.IGNORECASE,
+        )
+    ]
+    return {
+        "provers_detected": prover_names,
+        "requested_units": list(SPARK_UNITS),
+        "units_mentioned_in_output": observed_units,
+        "checks_proved": reported_count(
+            (r"(\d[\d,]*)\s+checks?\s+proved", r"proved\s+checks?:\s*(\d[\d,]*)")
+        ),
+        "checks_not_proved": reported_count(
+            (
+                r"(\d[\d,]*)\s+checks?\s+(?:not proved|unproved)",
+                r"(?:not proved|unproved)\s+checks?:\s*(\d[\d,]*)",
+            )
+        ),
+        "timeouts_reported": reported_count(
+            (r"(\d[\d,]*)\s+(?:proof\s+)?timeouts?", r"timeouts?:\s*(\d[\d,]*)")
+        ),
+        "maximum_rss_kib": int(maximum_rss.group(1)) if maximum_rss else None,
+        "gnatprove_report_excerpt": summary_lines[-80:],
+    }
+
+
+def _publish_proof_statistics(report: dict[str, object]) -> None:
+    """Publish a concise, honest summary; unavailable metrics remain unavailable."""
+    elapsed = float(report["duration_seconds"])
+    status = "passed" if report["exit_code"] == 0 else "failed"
+    lines = [
+        "# GNATprove proof statistics",
+        "",
+        f"- **Result:** {status}",
+        f"- **Elapsed time:** {elapsed:.2f} seconds",
+        f"- **Proof level:** 2",
+        f"- **Per-check timeout:** 10 seconds",
+    ]
+    memory_kib = report["maximum_rss_kib"]
+    if memory_kib is None:
+        lines.append("- **Maximum resident memory:** unavailable from this run")
+    else:
+        lines.append(f"- **Maximum resident memory:** {int(memory_kib) / 1024:.1f} MiB")
+    provers = report["provers_detected"]
+    lines.append(
+        f"- **Provers observed in output:** {', '.join(provers) if provers else 'not reported'}"
+    )
+    for label, key in (
+        ("Checks proved", "checks_proved"),
+        ("Checks not proved", "checks_not_proved"),
+        ("Timeouts reported", "timeouts_reported"),
+    ):
+        value = report[key]
+        lines.append(f"- **{label}:** {value if value is not None else 'not reported by GNATprove'}")
+    lines.extend(
+        [
+            "",
+            f"- **Units requested:** {', '.join(report['requested_units'])}",
+            "- **Per-unit/per-prover timings:** not emitted by this GNATprove report; no estimates are substituted.",
+            "- **Detailed output and machine-readable statistics:** retained in the spark-proof-report workflow artifact.",
+            "",
+        ]
+    )
+    summary_path = os.getenv("GITHUB_STEP_SUMMARY")
+    if summary_path:
+        with Path(summary_path).open("a", encoding="utf-8") as stream:
+            stream.write("\n".join(lines))
+    print("\n".join(lines))
+
+
 def run_proofs() -> None:
     execute("GNATprove version", ["gnatprove", "--version"])
     command = [
@@ -293,7 +398,7 @@ def run_proofs() -> None:
         "-j0",
         "--mode=all",
         "--level=2",
-        "--timeout=120",
+        "--timeout=10",
         "--checks-as-errors=on",
         "--warnings=error",
         "--report=all",
@@ -301,11 +406,51 @@ def run_proofs() -> None:
         "-u",
         *SPARK_UNITS,
     ]
-    execute(
-        "SPARK legality, flow, run-time safety, and contracts",
-        command,
-        log_name="gnatprove.log",
+
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_path = LOG_DIR / "gnatprove.log"
+    timed_command = command
+    time_binary = Path("/usr/bin/time")
+    if time_binary.is_file():
+        timed_command = [str(time_binary), "-v", *command]
+
+    started = time.monotonic()
+    exit_code = 0
+    failure: CIError | None = None
+    try:
+        execute(
+            "SPARK legality, flow, run-time safety, and contracts",
+            timed_command,
+            log_name="gnatprove.log",
+        )
+    except CIError as error:
+        exit_code = 1
+        failure = error
+
+    elapsed = time.monotonic() - started
+    log_text = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
+    metrics = _proof_report_metrics(log_text)
+    report: dict[str, object] = {
+        "schema_version": 1,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "commit": os.getenv("GITHUB_SHA"),
+        "workflow_run_id": os.getenv("GITHUB_RUN_ID"),
+        "workflow_run_attempt": os.getenv("GITHUB_RUN_ATTEMPT"),
+        "command": command,
+        "proof_level": 2,
+        "timeout_seconds": 10,
+        "exit_code": exit_code,
+        "duration_seconds": round(elapsed, 3),
+        **metrics,
+    }
+    report_path = LOG_DIR / "gnatprove-statistics.json"
+    report_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
+    _publish_proof_statistics(report)
+    if failure is not None:
+        raise failure
 
 
 def write_summary() -> None:
