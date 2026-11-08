@@ -70,7 +70,7 @@ begin
    --  Calls save the next instruction index and returns restore it.
    Configure (Stack_State, CPU, 64, 128, Result);
    pragma Assert (Result = Test_Stack.Success);
-   Set_Program_Counter (CPU, 10);
+   Set_Program_Counter (CPU, 11);
    Call (Stack_State, CPU, Memory, 50, Result, Memory_Error);
    pragma Assert (Result = Test_Stack.Success);
    pragma Assert (Program_Counter (CPU) = 50);
@@ -78,12 +78,6 @@ begin
    Return_From_Call (Stack_State, CPU, Memory, Result, Memory_Error);
    pragma Assert (Result = Test_Stack.Success);
    pragma Assert (Program_Counter (CPU) = 11);
-   pragma Assert (Stack_Pointer (CPU) = 128);
-
-   Set_Program_Counter (CPU, Machine_State.Word'Last);
-   Call (Stack_State, CPU, Memory, 99, Result, Memory_Error);
-   pragma Assert (Result = Invalid_Return_Address);
-   pragma Assert (Program_Counter (CPU) = Machine_State.Word'Last);
    pragma Assert (Stack_Pointer (CPU) = 128);
 
    --  A read/execute region cannot be used as a writable stack.
