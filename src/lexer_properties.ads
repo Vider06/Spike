@@ -45,6 +45,15 @@ is
                   and then Candidate_Priority > Current_Priority))
      with Global => null;
 
+   function Match_Tied
+     (Candidate_Length  : Natural;
+      Candidate_Priority : Integer;
+      Current_Length    : Natural;
+      Current_Priority  : Integer) return Boolean
+     is (Candidate_Length = Current_Length
+         and then Candidate_Priority = Current_Priority)
+     with Global => null;
+
    function Cursor_In_Bounds
      (Cursor, Token_Count : Natural) return Boolean
      is (Cursor <= Token_Count)
