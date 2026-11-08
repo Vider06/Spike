@@ -8,10 +8,11 @@ package VM_Stack
 is
    use type Memory_Model.Address;
    use type Machine_State.Word;
+   use type Machine_State.Execution_Status;
 
    type Stack_Result is
      (Success, Not_Configured, Invalid_Bounds, Stack_Overflow,
-      Stack_Underflow, Memory_Access_Failed, Invalid_Return_Address);
+      Stack_Underflow, Memory_Access_Failed);
 
    type Stack is private;
 
