@@ -1,9 +1,7 @@
 package body VM_Stack
   with SPARK_Mode => On
 is
-   use type Memory_Model.Address;
    use type Memory_Model.Memory_Result;
-   use type Machine_State.Word;
 
    procedure Configure
      (State : out Stack;
