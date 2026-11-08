@@ -324,6 +324,48 @@ def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[
             re.IGNORECASE,
         )
     ]
+    per_unit_counts: dict[str, dict[str, int]] = {}
+    check_message = re.compile(
+        r"^(?P<unit>.+?\.ad[bs]):\d+:\d+:\s*"
+        r"(?P<level>info|low|medium|high):\s*(?P<message>.*)$",
+        re.IGNORECASE,
+    )
+    for line in log_text.splitlines():
+        match = check_message.match(line.strip())
+        if not match:
+            continue
+        message = match.group("message")
+        level = match.group("level").casefold()
+        if level == "info" and "proved" in message.casefold():
+            result_key = "proved"
+        elif level in {"low", "medium", "high"} and re.search(
+            r"might fail|could fail|not proved|unproved", message, re.IGNORECASE
+        ):
+            result_key = "not_proved"
+        else:
+            continue
+        unit_name = Path(match.group("unit")).name
+        counts = per_unit_counts.setdefault(
+            unit_name, {"proved": 0, "not_proved": 0}
+        )
+        counts[result_key] += 1
+
+    time_limit_events = len(
+        re.findall(
+            r"\[provers reached [^\]]*time[^\]]*limit before completing the proof\]",
+            combined_text,
+            re.IGNORECASE,
+        )
+    )
+    interrupted_events = len(
+        re.findall(
+            r"\[provers reached [^\]]*(?:time|step|memory)[^\]]*limit before completing the proof\]"
+            r"|\[provers gave up before completing the proof\]"
+            r"|\b(?:proof|prover) (?:was )?interrupted\b",
+            combined_text,
+            re.IGNORECASE,
+        )
+    )
     total_row = re.search(r"(?m)^\s*Total\s+(.+)$", project_report_text)
     summary_cells: list[str] = []
     if total_row:
@@ -353,6 +395,7 @@ def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[
         "provers_detected": prover_names,
         "requested_units": list(SPARK_UNITS),
         "units_mentioned_in_output": observed_units,
+        "per_unit_check_counts": per_unit_counts,
         "checks_total": cell_count(0),
         "checks_proved": sum(proved_parts) if len(summary_cells) >= 6 else reported_count(
             (r"(\d[\d,]*)\s+checks?\s+proved", r"proved\s+checks?:\s*(\d[\d,]*)")
@@ -364,9 +407,8 @@ def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[
                 r"(?:not proved|unproved)\s+checks?:\s*(\d[\d,]*)",
             )
         ),
-        "timeouts_reported": reported_count(
-            (r"(\d[\d,]*)\s+(?:proof\s+)?timeouts?", r"timeouts?:\s*(\d[\d,]*)")
-        ),
+        "proofs_timed_out": time_limit_events,
+        "proofs_interrupted": interrupted_events,
         "max_steps_used": reported_count((r"max steps used for successful proof:\s*(\d[\d,]*)",)),
         "maximum_rss_kib": int(maximum_rss.group(1)) if maximum_rss else None,
         "gnatprove_report_excerpt": summary_lines[-80:],
@@ -399,10 +441,27 @@ def _publish_proof_statistics(report: dict[str, object]) -> None:
         ("Checks proved", "checks_proved"),
         ("Checks justified", "checks_justified"),
         ("Checks not proved", "checks_not_proved"),
-        ("Timeouts reported", "timeouts_reported"),
+        ("Proof attempts timed out", "proofs_timed_out"),
+        ("Proof attempts interrupted", "proofs_interrupted"),
     ):
         value = report[key]
         lines.append(f"- **{label}:** {value if value is not None else 'not reported by GNATprove'}")
+    per_unit = report["per_unit_check_counts"]
+    if per_unit:
+        lines.extend(
+            [
+                "",
+                "### Per-unit proof checks",
+                "",
+                "| Ada unit | Proved | Not proved |",
+                "|---|---:|---:|",
+            ]
+        )
+        for unit, counts in sorted(per_unit.items()):
+            lines.append(
+                "| " + unit + " | " + str(counts["proved"]) + " | "
+                + str(counts["not_proved"]) + " |"
+            )
     if report["checks_total"] is not None:
         lines.append(f"- **Total checks in GNATprove project summary:** {report['checks_total']}")
     if report["max_steps_used"] is not None:
@@ -411,7 +470,7 @@ def _publish_proof_statistics(report: dict[str, object]) -> None:
         [
             "",
             f"- **Units requested:** {', '.join(report['requested_units'])}",
-            "- **Per-check prover timings and steps:** captured by GNATprove statistics and retained in the raw report; per-unit wall-clock timings are not emitted.",
+            "- **Per-check prover timings and steps:** captured by GNATprove statistics and retained in the raw report; per-unit check counts are aggregated below, while per-unit wall-clock timings are not emitted.",
             "- **Detailed output and machine-readable statistics:** retained in the spark-proof-report workflow artifact.",
             "",
         ]
