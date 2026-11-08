@@ -41,7 +41,6 @@ is
      (State : in out Memory; Start : Address; Length : Address;
       Rights : Permissions; Result : out Memory_Result)
    is
-      Finish : Address;
    begin
       if Length = 0
         or else Start >= Address (Capacity)
@@ -61,14 +60,15 @@ is
          return;
       end if;
 
-      Finish := Start + Length;
       for Index in 1 .. State.Count loop
          declare
-            Existing_Start : constant Address := State.Regions (Index).Start;
-            Existing_End : constant Address :=
-              Existing_Start + State.Regions (Index).Length;
+            Existing : constant Region := State.Regions (Index);
+            Overlaps : constant Boolean :=
+              (if Start >= Existing.Start
+               then Start - Existing.Start < Existing.Length
+               else Existing.Start - Start < Length);
          begin
-            if Start < Existing_End and Existing_Start < Finish then
+            if Overlaps then
                Result := Region_Overlap;
                return;
             end if;
