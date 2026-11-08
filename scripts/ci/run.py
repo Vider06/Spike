@@ -289,6 +289,7 @@ def run_proofs() -> None:
         "-j0",
         "--mode=all",
         "--level=2",
+        "--timeout=20",
         "--checks-as-errors=on",
         "--warnings=error",
         "--report=all",
