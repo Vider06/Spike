@@ -1,8 +1,6 @@
 package body Virtual_Memory
   with SPARK_Mode => On
 is
-   use type Address;
-
    function Region_Count (State : Memory) return Natural is
    begin
       return State.Count;
