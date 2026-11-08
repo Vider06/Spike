@@ -344,6 +344,11 @@ def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[
     prover_count = cell_count(3)
     proved_parts = [value for value in (flow_count, interval_count, prover_count) if value is not None]
     unproved_count = cell_count(5)
+    if len(summary_cells) >= 6 and summary_cells[5] == ".":
+        unproved_count = 0
+    justified_count = cell_count(4)
+    if len(summary_cells) >= 5 and summary_cells[4] == ".":
+        justified_count = 0
     return {
         "provers_detected": prover_names,
         "requested_units": list(SPARK_UNITS),
@@ -352,7 +357,7 @@ def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[
         "checks_proved": sum(proved_parts) if summary_cells else reported_count(
             (r"(\d[\d,]*)\s+checks?\s+proved", r"proved\s+checks?:\s*(\d[\d,]*)")
         ),
-        "checks_justified": cell_count(4),
+        "checks_justified": justified_count,
         "checks_not_proved": unproved_count if summary_cells else reported_count(
             (
                 r"(\d[\d,]*)\s+checks?\s+(?:not proved|unproved)",
@@ -392,16 +397,21 @@ def _publish_proof_statistics(report: dict[str, object]) -> None:
     )
     for label, key in (
         ("Checks proved", "checks_proved"),
+        ("Checks justified", "checks_justified"),
         ("Checks not proved", "checks_not_proved"),
         ("Timeouts reported", "timeouts_reported"),
     ):
         value = report[key]
         lines.append(f"- **{label}:** {value if value is not None else 'not reported by GNATprove'}")
+    if report["checks_total"] is not None:
+        lines.append(f"- **Total checks in GNATprove project summary:** {report['checks_total']}")
+    if report["max_steps_used"] is not None:
+        lines.append(f"- **Maximum steps used by a successful proof:** {report['max_steps_used']}")
     lines.extend(
         [
             "",
             f"- **Units requested:** {', '.join(report['requested_units'])}",
-            "- **Per-unit/per-prover timings:** not emitted by this GNATprove report; no estimates are substituted.",
+            "- **Per-check prover timings and steps:** captured by GNATprove statistics and retained in the raw report; per-unit wall-clock timings are not emitted.",
             "- **Detailed output and machine-readable statistics:** retained in the spark-proof-report workflow artifact.",
             "",
         ]
