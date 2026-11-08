@@ -40,6 +40,7 @@ ADA_TESTS = (
     "test_vm_instructions",
     "test_vm_stack",
     "test_dynamic_lexer",
+    "fuzz_dynamic_lexer",
     "prove_lexer_properties",
     "prove_virtual_memory",
     "prove_vm_stack",
