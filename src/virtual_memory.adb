@@ -38,15 +38,13 @@ is
    end Find_Region;
 
    procedure Map_Region
-     (State : in out Memory;
-      Start : Address;
-      Length : Address;
-      Rights : Permissions;
-      Result : out Memory_Result)
+     (State : in out Memory; Start : Address; Length : Address;
+      Rights : Permissions; Result : out Memory_Result)
    is
       Finish : Address;
    begin
-      if Start >= Address (Capacity)
+      if Length = 0
+        or else Start >= Address (Capacity)
         or else Length > Address (Capacity) - Start
       then
          Result := Invalid_Range;
