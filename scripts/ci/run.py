@@ -48,6 +48,7 @@ SPARK_UNITS = (
     "vm_instructions.adb",
     "prove_virtual_memory.adb",
     "prove_vm_stack.adb",
+    "prove_lexer_properties.adb",
 )
 
 

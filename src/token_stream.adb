@@ -1,4 +1,5 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Lexer_Properties;
 
 package body Token_Stream is
    function Create (Items : Token_Vectors.Vector) return Stream is
@@ -31,7 +32,8 @@ package body Token_Stream is
    procedure Consume (Items : in out Stream; Value : out Token) is
    begin
       Value := Peek (Items);
-      Items.Cursor := Items.Cursor + 1;
+      Lexer_Properties.Advance_Cursor
+        (Items.Cursor, Natural (Items.Items.Length));
    end Consume;
 
    procedure Expect

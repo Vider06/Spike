@@ -1,5 +1,6 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.JSON;
+with Lexer_Properties;
 
 package body Dynamic_Lexer is
    use Lexer_Config;
@@ -12,12 +13,6 @@ package body Dynamic_Lexer is
       Value    : Unbounded_String;
       Length   : Natural := 0;
    end record;
-
-   function Is_Start (C : Character) return Boolean is
-     (C = '_' or else C in 'A' .. 'Z' or else C in 'a' .. 'z');
-
-   function Is_Continue (C : Character) return Boolean is
-     (Is_Start (C) or else C in '0' .. '9');
 
    function Is_Space (C : Character) return Boolean is
      (C = ' ' or else C = ASCII.HT or else C = ASCII.LF or else C = ASCII.CR);
@@ -63,15 +58,15 @@ package body Dynamic_Lexer is
                end if;
             end;
          when Identifier =>
-            if not Is_Start (Source (At)) then return Result; end if;
+            if not Lexer_Properties.Is_Identifier_Start (Source (At)) then return Result; end if;
             Last := At;
-            while Last < Source'Last and then Is_Continue (Source (Last + 1)) loop
+            while Last < Source'Last and then Lexer_Properties.Is_Identifier_Continue (Source (Last + 1)) loop
                Last := Last + 1;
             end loop;
          when Decimal_Integer =>
-            if Source (At) not in '0' .. '9' then return Result; end if;
+            if not Lexer_Properties.Is_ASCII_Digit (Source (At)) then return Result; end if;
             Last := At;
-            while Last < Source'Last and then Source (Last + 1) in '0' .. '9' loop
+            while Last < Source'Last and then Lexer_Properties.Is_ASCII_Digit (Source (Last + 1)) loop
                Last := Last + 1;
             end loop;
          when Hex_Integer | Binary_Integer =>
@@ -90,8 +85,7 @@ package body Dynamic_Lexer is
                C := Source (Last);
                exit when
                  (Def.Matcher = Hex_Integer and then
-                    C not in '0' .. '9' and then C not in 'a' .. 'f'
-                    and then C not in 'A' .. 'F')
+                    not Lexer_Properties.Is_ASCII_Hex_Digit (C))
                  or else (Def.Matcher = Binary_Integer and then C not in '0' .. '1');
                Last := Last + 1;
             end loop;
@@ -169,9 +163,9 @@ package body Dynamic_Lexer is
                   Current : constant Candidate := Match (Def, Source, At);
                begin
                   if Current.Found then
-                     if not Best.Found or else Current.Length > Best.Length
-                       or else (Current.Length = Best.Length
-                                and then Current.Def.Priority > Best.Def.Priority)
+                     if not Best.Found or else Lexer_Properties.Better_Match
+                       (Current.Length, Current.Def.Priority,
+                        Best.Length, Best.Def.Priority)
                      then
                         Best := Current;
                         Tied := False;

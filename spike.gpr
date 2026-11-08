@@ -12,7 +12,8 @@ project Spike is
       "test_vm_stack.adb",
       "test_dynamic_lexer.adb",
       "prove_virtual_memory.adb",
-      "prove_vm_stack.adb");
+      "prove_vm_stack.adb",
+      "prove_lexer_properties.adb");
 
    package Compiler is
       for Default_Switches ("Ada") use
