@@ -127,7 +127,7 @@ class DynamicLexer:
                 char = remaining[end]
                 if escaped:
                     escaped = False
-                elif char == "\\\\":
+                elif char == "\\":
                     escaped = True
                 elif char == '"':
                     end += 1
