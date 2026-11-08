@@ -67,10 +67,10 @@ jobs:
           echo "$HOME/.alire/bin" >> "$GITHUB_PATH"
 
       - name: Compile Ada and run every VM test
-        run: python scripts/ci/run.py ada
+        run: alr exec -- python scripts/ci/run.py ada
 
       - name: Run SPARK legality, flow analysis, and proofs
-        run: python scripts/ci/run.py prove
+        run: alr exec -- python scripts/ci/run.py prove
 
   workflow-security:
     name: Workflow lint and security audit
