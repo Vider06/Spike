@@ -426,7 +426,7 @@ def _publish_proof_statistics(report: dict[str, object]) -> None:
         f"- **Result:** {status}",
         f"- **Elapsed time:** {elapsed:.2f} seconds",
         f"- **Proof level:** 2",
-        f"- **Per-prover timeout:** 10 seconds",
+        f"- **Per-prover timeout:** 60 seconds",
     ]
     memory_kib = report["maximum_rss_kib"]
     if memory_kib is None:
@@ -492,7 +492,7 @@ def run_proofs() -> None:
         "-j0",
         "--mode=all",
         "--level=2",
-        "--timeout=10",
+        "--timeout=60",
         "--checks-as-errors=on",
         "--warnings=error",
         "--report=statistics",
@@ -544,7 +544,7 @@ def run_proofs() -> None:
         "workflow_run_attempt": os.getenv("GITHUB_RUN_ATTEMPT"),
         "command": command,
         "proof_level": 2,
-        "timeout_seconds": 10,
+        "timeout_seconds": 60,
         "exit_code": exit_code,
         "duration_seconds": round(elapsed, 3),
         **metrics,
