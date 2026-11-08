@@ -2,6 +2,7 @@ with Machine_State;
 
 procedure Test_Machine_State is
    use Machine_State;
+   use type Machine_State.Word;
 
    State : Machine_State.Machine_State;
    Expected_Flags : constant Status_Flags :=
