@@ -9,9 +9,8 @@ package body Dynamic_Lexer is
 
    type Single_Character_Buckets is
      array (Character) of Lexer_Config.Definition_Vectors.Vector;
-   type Prefix_Buckets is
-     array (Natural range 0 .. 65_535)
-       of Lexer_Config.Definition_Vectors.Vector;
+   type Prefix_Heads is array (Natural range 0 .. 65_535) of Natural;
+   type Prefix_Links is array (Positive range 1 .. 4_096) of Natural;
 
    type Generic_Entry is record
       Available  : Boolean := False;
@@ -187,7 +186,9 @@ package body Dynamic_Lexer is
       Tied   : Boolean;
 
       Single_Literals : Single_Character_Buckets;
-      Prefix_Literals : Prefix_Buckets;
+      Prefix_Head : Prefix_Heads := (others => 0);
+      Prefix_Next : Prefix_Links := (others => 0);
+      Prefix_Rules : Definition_Vectors.Vector;
       Generic_Definitions : Generic_Matchers;
 
       procedure Consider (Def : Token_Definition) is
@@ -221,6 +222,9 @@ package body Dynamic_Lexer is
       if Source'Length > 16 * 1_024 * 1_024 then
          raise Lexical_Error with "source exceeds the 16 MiB lexer input limit";
       end if;
+      if Configuration.Definitions.Length > 4_096 then
+         raise Lexical_Error with "token definition limit (4096) exceeded";
+      end if;
 
       --  Compile the JSON definitions into dispatch tables once per input.
       --  Single-byte and two-byte prefix indexes avoid scanning unrelated
@@ -235,9 +239,16 @@ package body Dynamic_Lexer is
                elsif Pattern'Length = 1 then
                   Single_Literals (Pattern (Pattern'First)).Append (Def);
                else
-                  Prefix_Literals
-                    (Prefix_Key (Pattern (Pattern'First),
-                                 Pattern (Pattern'First + 1))).Append (Def);
+                  declare
+                     Key : constant Natural :=
+                       Prefix_Key (Pattern (Pattern'First),
+                                   Pattern (Pattern'First + 1));
+                  begin
+                     Prefix_Rules.Append (Def);
+                     Prefix_Next (Positive (Prefix_Rules.Length)) :=
+                       Prefix_Head (Key);
+                     Prefix_Head (Key) := Natural (Prefix_Rules.Length);
+                  end;
                end if;
             end;
          else
@@ -270,12 +281,17 @@ package body Dynamic_Lexer is
             end loop;
 
             if Source_Position < Source'Last then
-               for Def of Prefix_Literals
-                 (Prefix_Key (Source (Source_Position),
-                              Source (Source_Position + 1)))
-               loop
-                  Consider (Def);
-               end loop;
+               declare
+                  Index : Natural :=
+                    Prefix_Head
+                      (Prefix_Key (Source (Source_Position),
+                                  Source (Source_Position + 1)));
+               begin
+                  while Index /= 0 loop
+                     Consider (Prefix_Rules (Positive (Index)));
+                     Index := Prefix_Next (Positive (Index));
+                  end loop;
+               end;
             end if;
 
             if Lexer_Properties.Is_Identifier_Start (Source (Source_Position)) then
