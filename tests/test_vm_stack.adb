@@ -22,7 +22,7 @@ begin
    Map_Region
      (Memory, 0, 64,
       (Read => True, Write => False, Execute => True), Memory_Error);
-   pragma Assert (Memory_Error = Success);
+   pragma Assert (Memory_Error = Test_Memory.Success);
    Map_Region
      (Memory, 64, 64,
       (Read => True, Write => True, Execute => False), Memory_Error);
