@@ -83,6 +83,7 @@ is
        Pre => Current_Status (State) = Running,
        Post =>
          Program_Counter (State) = Value
+         and then Stack_Pointer (State) = Stack_Pointer (State'Old)
          and then Get_Flags (State) = Get_Flags (State'Old)
          and then Current_Status (State) = Current_Status (State'Old)
          and then Last_Fault (State) = Last_Fault (State'Old);
@@ -106,6 +107,7 @@ is
        Post =>
          Get_Flags (State) = Value
          and then Program_Counter (State) = Program_Counter (State'Old)
+         and then Stack_Pointer (State) = Stack_Pointer (State'Old)
          and then Current_Status (State) = Current_Status (State'Old)
          and then Last_Fault (State) = Last_Fault (State'Old);
 
@@ -130,6 +132,7 @@ is
          Current_Status (State) = Faulted
          and then Last_Fault (State) = Reason
          and then Program_Counter (State) = Program_Counter (State'Old)
+         and then Stack_Pointer (State) = Stack_Pointer (State'Old)
          and then Get_Flags (State) = Get_Flags (State'Old)
          and then
            (for all Index in Register_Index =>
