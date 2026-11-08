@@ -4,6 +4,7 @@ procedure Prove_Lexer_Properties
   with SPARK_Mode => On
 is
    Cursor : Natural := 0;
+   Offset : Natural := 3;
 begin
    pragma Assert (Lexer_Properties.Is_ASCII_Digit ('0'));
    pragma Assert (Lexer_Properties.Is_ASCII_Digit ('9'));
@@ -16,6 +17,13 @@ begin
    pragma Assert (not Lexer_Properties.Is_Identifier_Start ('4'));
    pragma Assert (Lexer_Properties.Is_Identifier_Continue ('4'));
    pragma Assert (Lexer_Properties.Valid_Span (0, 4, 4));
+   pragma Assert (Lexer_Properties.Valid_Token_Span (2, 5, 3));
+   pragma Assert (not Lexer_Properties.Valid_Token_Span (2, 5, 2));
+   pragma Assert (not Lexer_Properties.Valid_Token_Span (2, 2, 0));
+   pragma Assert (Lexer_Properties.Spans_Are_Ordered (5, 5));
+   pragma Assert (not Lexer_Properties.Spans_Are_Ordered (6, 5));
+   Lexer_Properties.Advance_Offset (Offset, 4, 7);
+   pragma Assert (Offset = 7);
    pragma Assert (not Lexer_Properties.Valid_Span (3, 2, 4));
    pragma Assert (not Lexer_Properties.Valid_Span (0, 5, 4));
    pragma Assert (Lexer_Properties.Better_Match (3, 0, 2, 100));
