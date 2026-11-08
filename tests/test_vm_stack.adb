@@ -26,7 +26,7 @@ begin
    Map_Region
      (Memory, 64, 64,
       (Read => True, Write => True, Execute => False), Memory_Error);
-   pragma Assert (Memory_Error = Success);
+   pragma Assert (Memory_Error = Test_Memory.Success);
 
    Reset (CPU);
    Configure (Stack_State, CPU, 64, 128, Result);
