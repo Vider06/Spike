@@ -22,15 +22,15 @@ package body Dynamic_Lexer is
    function Is_Space (C : Character) return Boolean is
      (C = ' ' or else C = ASCII.HT or else C = ASCII.LF or else C = ASCII.CR);
 
-   function Starts (Source : String; At : Positive; Pattern : String)
+   function Starts (Source : String; Source_Position : Positive; Pattern : String)
      return Boolean
    is
    begin
-      if Pattern'Length > Source'Last - At + 1 then
+      if Pattern'Length > Source'Last - Source_Position + 1 then
          return False;
       end if;
       for Offset in 0 .. Pattern'Length - 1 loop
-         if Source (At + Offset) /= Pattern (Pattern'First + Offset) then
+         if Source (Source_Position + Offset) /= Pattern (Pattern'First + Offset) then
             return False;
          end if;
       end loop;
@@ -38,14 +38,14 @@ package body Dynamic_Lexer is
    end Starts;
 
    function Match
-     (Def : Token_Definition; Source : String; At : Positive)
+     (Def : Token_Definition; Source : String; Source_Position : Positive)
       return Candidate
    is
       Result : Candidate;
-      Last   : Natural := At - 1;
+      Last   : Natural := Source_Position - 1;
       C      : Character;
    begin
-      if At > Source'Last then
+      if Source_Position > Source'Last then
          return Result;
       end if;
 
@@ -54,8 +54,8 @@ package body Dynamic_Lexer is
             declare
                Pattern : constant String := To_String (Def.Value);
             begin
-               if not Starts (Source, At, Pattern) then return Result; end if;
-               Last := At + Pattern'Length - 1;
+               if not Starts (Source, Source_Position, Pattern) then return Result; end if;
+               Last := Source_Position + Pattern'Length - 1;
                if Def.Matcher = Line_Comment then
                   while Last < Source'Last and then Source (Last + 1) /= ASCII.LF loop
                      Last := Last + 1;
@@ -63,29 +63,29 @@ package body Dynamic_Lexer is
                end if;
             end;
          when Identifier =>
-            if not Lexer_Properties.Is_Identifier_Start (Source (At)) then return Result; end if;
-            Last := At;
+            if not Lexer_Properties.Is_Identifier_Start (Source (Source_Position)) then return Result; end if;
+            Last := Source_Position;
             while Last < Source'Last and then Lexer_Properties.Is_Identifier_Continue (Source (Last + 1)) loop
                Last := Last + 1;
             end loop;
          when Decimal_Integer =>
-            if not Lexer_Properties.Is_ASCII_Digit (Source (At)) then return Result; end if;
-            Last := At;
+            if not Lexer_Properties.Is_ASCII_Digit (Source (Source_Position)) then return Result; end if;
+            Last := Source_Position;
             while Last < Source'Last and then Lexer_Properties.Is_ASCII_Digit (Source (Last + 1)) loop
                Last := Last + 1;
             end loop;
          when Hex_Integer | Binary_Integer =>
-            if At + 2 > Source'Last or else Source (At) /= '0' then
+            if Source_Position + 2 > Source'Last or else Source (Source_Position) /= '0' then
                return Result;
             end if;
             if (Def.Matcher = Hex_Integer and then
-                Source (At + 1) not in 'x' | 'X')
+                Source (Source_Position + 1) not in 'x' | 'X')
               or else (Def.Matcher = Binary_Integer and then
-                       Source (At + 1) not in 'b' | 'B')
+                       Source (Source_Position + 1) not in 'b' | 'B')
             then
                return Result;
             end if;
-            Last := At + 2;
+            Last := Source_Position + 2;
             while Last <= Source'Last loop
                C := Source (Last);
                exit when
@@ -95,16 +95,16 @@ package body Dynamic_Lexer is
                Last := Last + 1;
             end loop;
             Last := Last - 1;
-            if Last = At + 1 then return Result; end if;
+            if Last = Source_Position + 1 then return Result; end if;
          when Whitespace =>
-            if not Is_Space (Source (At)) then return Result; end if;
-            Last := At;
+            if not Is_Space (Source (Source_Position)) then return Result; end if;
+            Last := Source_Position;
             while Last < Source'Last and then Is_Space (Source (Last + 1)) loop
                Last := Last + 1;
             end loop;
          when Quoted_String =>
-            if Source (At) /= '"' then return Result; end if;
-            Last := At + 1;
+            if Source (Source_Position) /= '"' then return Result; end if;
+            Last := Source_Position + 1;
             while Last <= Source'Last loop
                if Source (Last) = ASCII.LF or else Source (Last) = ASCII.CR then
                   return Result;
@@ -114,7 +114,7 @@ package body Dynamic_Lexer is
                elsif Source (Last) = '"' then
                   declare
                      Parsed : constant GNATCOLL.JSON.Read_Result :=
-                       GNATCOLL.JSON.Read (Source (At .. Last));
+                       GNATCOLL.JSON.Read (Source (Source_Position .. Last));
                   begin
                      if not Parsed.Success
                        or else Parsed.Value.Kind /= GNATCOLL.JSON.JSON_String_Type
@@ -123,8 +123,8 @@ package body Dynamic_Lexer is
                      end if;
                      Result.Value := To_Unbounded_String
                        (GNATCOLL.JSON.Get (Parsed.Value));
-                     Result.Length := Last - At + 1;
-                     Result.Lexeme := To_Unbounded_String (Source (At .. Last));
+                     Result.Length := Last - Source_Position + 1;
+                     Result.Lexeme := To_Unbounded_String (Source (Source_Position .. Last));
                      Result.Def := Def;
                      Result.Found := True;
                      return Result;
@@ -135,8 +135,8 @@ package body Dynamic_Lexer is
             return Result;
       end case;
 
-      Result.Length := Last - At + 1;
-      Result.Lexeme := To_Unbounded_String (Source (At .. Last));
+      Result.Length := Last - Source_Position + 1;
+      Result.Lexeme := To_Unbounded_String (Source (Source_Position .. Last));
       Result.Value := Result.Lexeme;
       Result.Def := Def;
       Result.Found := True;
@@ -193,20 +193,20 @@ package body Dynamic_Lexer is
 
       while Offset < Source'Length loop
          declare
-            At : constant Positive := Source'First + Offset;
+            Source_Position : constant Positive := Source'First + Offset;
          begin
             Best := (others => <>);
             Tied := False;
 
-            for Def of Literals_And_Comments (Source (At)) loop
+            for Def of Literals_And_Comments (Source (Source_Position)) loop
                Consider (Def);
             end loop;
 
-            if Lexer_Properties.Is_Identifier_Start (Source (At)) then
+            if Lexer_Properties.Is_Identifier_Start (Source (Source_Position)) then
                for Def of Generic_Matchers (Identifier) loop
                   Consider (Def);
                end loop;
-            elsif Lexer_Properties.Is_ASCII_Digit (Source (At)) then
+            elsif Lexer_Properties.Is_ASCII_Digit (Source (Source_Position)) then
                for Def of Generic_Matchers (Decimal_Integer) loop
                   Consider (Def);
                end loop;
@@ -216,11 +216,11 @@ package body Dynamic_Lexer is
                for Def of Generic_Matchers (Binary_Integer) loop
                   Consider (Def);
                end loop;
-            elsif Source (At) = '"' then
+            elsif Source (Source_Position) = '"' then
                for Def of Generic_Matchers (Quoted_String) loop
                   Consider (Def);
                end loop;
-            elsif Is_Space (Source (At)) then
+            elsif Is_Space (Source (Source_Position)) then
                for Def of Generic_Matchers (Whitespace) loop
                   Consider (Def);
                end loop;
@@ -247,7 +247,7 @@ package body Dynamic_Lexer is
                    Column => Column));
             end if;
 
-            for I in At .. At + Best.Length - 1 loop
+            for I in Source_Position .. Source_Position + Best.Length - 1 loop
                if Source (I) = ASCII.LF then
                   Line := Line + 1;
                   Column := 1;
