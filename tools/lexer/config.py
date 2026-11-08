@@ -42,6 +42,9 @@ def validate_config(document: Any) -> LexerConfig:
     """Validate a JSON-decoded document and return an immutable config."""
     if not isinstance(document, dict):
         raise ConfigError("configuration root must be an object")
+    unknown_root = set(document) - {"schema_version", "tokens"}
+    if unknown_root:
+        raise ConfigError(f"unknown configuration fields: {', '.join(sorted(unknown_root))}")
     if document.get("schema_version") != "1.0":
         raise ConfigError("schema_version must be exactly '1.0'")
     raw_definitions = document.get("tokens")
@@ -56,18 +59,28 @@ def validate_config(document: Any) -> LexerConfig:
         prefix = f"tokens[{index}]"
         if not isinstance(raw, dict):
             raise ConfigError(f"{prefix} must be an object")
+        unknown_fields = set(raw) - {"name", "matcher", "value", "priority", "emit"}
+        if unknown_fields:
+            raise ConfigError(
+                f"{prefix} has unknown fields: {', '.join(sorted(unknown_fields))}"
+            )
         name = raw.get("name")
         matcher = raw.get("matcher")
         priority = raw.get("priority", 0)
         emit = raw.get("emit", True)
         value = raw.get("value")
 
-        if not isinstance(name, str) or not name or not name.isidentifier():
-            raise ConfigError(f"{prefix}.name must be a non-empty identifier")
+        if (
+            not isinstance(name, str)
+            or not name
+            or not name.isascii()
+            or not name.isidentifier()
+        ):
+            raise ConfigError(f"{prefix}.name must be an ASCII identifier")
         if name in names:
             raise ConfigError(f"duplicate token name: {name}")
         names.add(name)
-        if matcher not in SUPPORTED_MATCHERS:
+        if not isinstance(matcher, str) or matcher not in SUPPORTED_MATCHERS:
             raise ConfigError(
                 f"{prefix}.matcher must be one of: {', '.join(sorted(SUPPORTED_MATCHERS))}"
             )
