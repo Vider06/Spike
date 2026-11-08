@@ -242,13 +242,13 @@ package body Dynamic_Lexer is
             end;
          else
             declare
-               Entry : Generic_Entry renames Generic_Definitions (Def.Matcher);
+               Matcher_Rule : Generic_Entry renames Generic_Definitions (Def.Matcher);
             begin
-               if not Entry.Available
-                 or else Def.Priority > Entry.Definition.Priority
+               if not Matcher_Rule.Available
+                 or else Def.Priority > Matcher_Rule.Definition.Priority
                then
-                  Entry.Available := True;
-                  Entry.Definition := Def;
+                  Matcher_Rule.Available := True;
+                  Matcher_Rule.Definition := Def;
                elsif Def.Priority = Entry.Definition.Priority then
                   raise Lexical_Error with
                     "ambiguous generic matcher definitions: "
