@@ -27,20 +27,21 @@ The virtual ISA defines program behavior. Neither x86-64 nor the host CPU define
 - `spike run program.spike` is the planned Quick-mode interface.
 - `spike build program.spike` is the planned Native-mode interface.
 
-These commands are design targets; the toolchain is not yet implemented. This VM-only implementation does not include a source interpreter, parser, frontend, CLI, or native backend.
+These commands are design targets; the toolchain is not yet implemented. This VM-only implementation does not include a source interpreter, parser, frontend, CLI, instruction decoder, or native backend.
 
 ## VM implementation scope
 
-The current VM work focuses on its architectural state and security substrate:
+The current VM work focuses on architectural semantics and its safety substrate:
 
 - Sixteen independent 64-bit virtual registers, PC, flags, and execution status.
-- Explicit terminal fault state with a structured fault kind.
+- Deterministic reset and explicit terminal fault state with a structured fault kind.
+- Virtual semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT.
 - Finite virtual memory with non-overlapping mapped regions.
 - Independent read, write, and execute permissions, including W^X enforcement.
-- Checked byte access and instruction-fetch access.
-- Deterministic reset and tests for boundary and permission failures.
+- Checked byte reads, writes, and instruction-fetch access.
+- Tests for arithmetic boundaries, flag behavior, operand aliasing, memory boundaries, and permission failures.
 
-The byte-memory layer does not yet imply multi-byte loads/stores, a stack, calls, branches, or host services. Those require separate architectural decisions.
+The instruction package implements semantic operations only. It does not fetch/decode a program, parse source text, or run an interpreter loop. The byte-memory layer does not yet imply multi-byte loads/stores, a stack, calls, branches, or host services. Those require separate architectural decisions.
 
 ## Documentation
 
