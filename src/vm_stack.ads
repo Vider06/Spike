@@ -11,7 +11,7 @@ is
 
    type Stack_Result is
      (Success, Not_Configured, Invalid_Bounds, Stack_Overflow,
-      Stack_Underflow, Memory_Access_Failed);
+      Stack_Underflow, Memory_Access_Failed, Invalid_Return_Address);
 
    type Stack is private;
 
@@ -64,6 +64,25 @@ is
                Machine_State.Stack_Pointer (CPU'Old) + 8
              else Machine_State.Stack_Pointer (CPU) =
                Machine_State.Stack_Pointer (CPU'Old));
+
+   procedure Call
+     (State : Stack;
+      CPU : in out Machine_State.Machine_State;
+      Memory : in out Memory_Model.Memory;
+      Target : Machine_State.Word;
+      Result : out Stack_Result;
+      Memory_Error : out Memory_Model.Memory_Result)
+     with Global => null,
+          Pre => Machine_State.Current_Status (CPU) = Machine_State.Running;
+
+   procedure Return_From_Call
+     (State : Stack;
+      CPU : in out Machine_State.Machine_State;
+      Memory : Memory_Model.Memory;
+      Result : out Stack_Result;
+      Memory_Error : out Memory_Model.Memory_Result)
+     with Global => null,
+          Pre => Machine_State.Current_Status (CPU) = Machine_State.Running;
 
 private
    type Stack is record
