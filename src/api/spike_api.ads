@@ -1,5 +1,6 @@
 with Ada.Strings.Unbounded;
 with Lexer_Config;
+with Token_Stream;
 
 package Spike_API is
    --  Stable Ada-facing boundary for the Spike toolchain.
@@ -40,7 +41,6 @@ package Spike_API is
    procedure Reset (Stream : in out Token_Stream_Handle);
 
 private
-   with Token_Stream;
    type Token_Stream_Handle is record
       Data : Token_Stream.Stream;
    end record;
