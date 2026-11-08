@@ -2,7 +2,7 @@ package body Lexer_Properties
   with SPARK_Mode => On
 is
    procedure Advance_Offset
-     (Offset, Amount, Source_Length : in out Natural)
+     (Offset : in out Natural; Amount, Source_Length : Natural)
    is
    begin
       Offset := Offset + Amount;
