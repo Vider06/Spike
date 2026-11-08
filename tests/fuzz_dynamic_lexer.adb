@@ -60,5 +60,28 @@ begin
       end;
    end loop;
 
-   Put_Line ("Dynamic lexer deterministic fuzz tests passed (2000 inputs)");
+   for Round in 1 .. 512 loop
+      pragma Unreferenced (Round);
+      declare
+         Document_Length : constant Natural := Next_Byte mod 129;
+         Document : String (1 .. Document_Length);
+      begin
+         for I in Document'Range loop
+            Document (I) := Character'Val (Next_Byte);
+         end loop;
+         begin
+            declare
+               Candidate : constant Lexer_Config.Lexer_Configuration :=
+                 Lexer_Config.Validate (Document);
+            begin
+               pragma Unreferenced (Candidate);
+            end;
+         exception
+            when Lexer_Config.Config_Error =>
+               null;
+         end;
+      end;
+   end loop;
+
+   Put_Line ("Dynamic lexer deterministic fuzz tests passed (2000 source and 512 JSON inputs)");
 end Fuzz_Dynamic_Lexer;
