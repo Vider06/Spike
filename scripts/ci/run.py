@@ -426,7 +426,7 @@ def _publish_proof_statistics(report: dict[str, object]) -> None:
         f"- **Result:** {status}",
         f"- **Elapsed time:** {elapsed:.2f} seconds",
         f"- **Proof level:** 2",
-        f"- **Per-check timeout:** 10 seconds",
+        f"- **Per-prover timeout:** 10 seconds",
     ]
     memory_kib = report["maximum_rss_kib"]
     if memory_kib is None:
@@ -503,6 +503,11 @@ def run_proofs() -> None:
 
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_path = LOG_DIR / "gnatprove.log"
+    project_report_path = ROOT / "build" / "obj" / "gnatprove" / "gnatprove.out"
+    stale_summary_path = LOG_DIR / "gnatprove-summary.out"
+    for stale_path in (project_report_path, stale_summary_path):
+        if stale_path.is_file():
+            stale_path.unlink()
     timed_command = command
     time_binary = Path("/usr/bin/time")
     if time_binary.is_file():
@@ -523,7 +528,6 @@ def run_proofs() -> None:
 
     elapsed = time.monotonic() - started
     log_text = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
-    project_report_path = ROOT / "build" / "obj" / "gnatprove" / "gnatprove.out"
     project_report_text = (
         project_report_path.read_text(encoding="utf-8", errors="replace")
         if project_report_path.is_file()
