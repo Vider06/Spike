@@ -29,6 +29,7 @@ REQUIRED_FILES = (
     "alire.toml",
     "scripts/ci/requirements.txt",
     "tests/prove_virtual_memory.adb",
+    "tests/prove_vm_stack.adb",
 )
 ADA_TESTS = (
     "test_machine_state",
@@ -36,14 +37,13 @@ ADA_TESTS = (
     "test_vm_instructions",
     "test_vm_stack",
     "prove_virtual_memory",
+    "prove_vm_stack",
 )
 SPARK_UNITS = (
     "machine_state.adb",
     "vm_instructions.adb",
-    "test_virtual_memory.adb",
-    "test_vm_instructions.adb",
-    "test_vm_stack.adb",
     "prove_virtual_memory.adb",
+    "prove_vm_stack.adb",
 )
 
 

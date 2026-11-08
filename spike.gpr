@@ -8,7 +8,8 @@ project Spike is
       "test_virtual_memory.adb",
       "test_vm_instructions.adb",
       "test_vm_stack.adb",
-      "prove_virtual_memory.adb");
+      "prove_virtual_memory.adb",
+      "prove_vm_stack.adb");
 
    package Compiler is
       for Default_Switches ("Ada") use
