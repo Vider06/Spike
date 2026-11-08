@@ -43,8 +43,10 @@ skipping input.
 ## Verification boundary
 
 The JSON adapter and dynamic string/container operations are Ada runtime
-components. They are not currently claimed as SPARK-proved. The package
-boundary is isolated so bounded, proof-oriented lexer state and token-stream
-invariants can be moved into SPARK-compatible types without changing the JSON
-contract. CI compiles and executes the native Ada lexer tests; the existing
-SPARK proof gate remains separate and does not imply lexer proofs.
+components and are not claimed as SPARK-proved. The ASCII character classes,
+identifier predicates, maximal-munch ordering predicate, source-span predicate,
+and cursor bounds/advance contract live in the separate SPARK package
+`Lexer_Properties`. Its proof harness is included in the existing GNATprove
+CI gate. The vector-backed stream and full dynamic matcher remain Ada runtime
+code; passing the helper proof does not imply that the entire lexer is formally
+verified.

@@ -40,6 +40,7 @@ ADA_TESTS = (
     "test_vm_instructions",
     "test_vm_stack",
     "test_dynamic_lexer",
+    "prove_lexer_properties",
     "prove_virtual_memory",
     "prove_vm_stack",
 )
@@ -48,6 +49,7 @@ SPARK_UNITS = (
     "vm_instructions.adb",
     "prove_virtual_memory.adb",
     "prove_vm_stack.adb",
+    "lexer_properties.ads",
     "prove_lexer_properties.adb",
 )
 
