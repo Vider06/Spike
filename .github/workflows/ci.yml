@@ -78,6 +78,7 @@ jobs:
           path: |
             build/ci/gnatprove.log
             build/ci/gnatprove-statistics.json
+            build/ci/gnatprove-summary.out
           if-no-files-found: warn
           retention-days: 90
 
