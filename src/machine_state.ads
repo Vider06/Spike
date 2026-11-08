@@ -97,7 +97,8 @@ is
          Stack_Pointer (State) = Value
          and then Program_Counter (State) = Program_Counter (State'Old)
          and then Get_Flags (State) = Get_Flags (State'Old)
-         and then Current_Status (State) = Current_Status (State'Old);
+         and then Current_Status (State) = Current_Status (State'Old)
+         and then Last_Fault (State) = Last_Fault (State'Old);
 
    procedure Set_Flags
      (State : in out Machine_State; Value : Status_Flags)
@@ -120,6 +121,7 @@ is
          and then Program_Counter (State) = Program_Counter (State'Old)
          and then Stack_Pointer (State) = Stack_Pointer (State'Old)
          and then Get_Flags (State) = Get_Flags (State'Old)
+         and then Last_Fault (State) = Last_Fault (State'Old)
          and then
            (for all Index in Register_Index =>
               Get_Register (State, Index) = Get_Register (State'Old, Index));
