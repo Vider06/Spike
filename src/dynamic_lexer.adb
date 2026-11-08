@@ -320,7 +320,8 @@ package body Dynamic_Lexer is
                   Column := Column + 1;
                end if;
             end loop;
-            Offset := Offset + Best.Length;
+            Lexer_Properties.Advance_Offset
+              (Offset, Best.Length, Source'Length);
          end;
       end loop;
       return Token_Stream.Create (Output);
