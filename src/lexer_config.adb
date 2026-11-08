@@ -92,7 +92,7 @@ package body Lexer_Config is
       end if;
       if not Root.Has_Field ("schema_version")
         or else Root.Get ("schema_version").Kind /= JSON_String_Type
-        or else Root.Get ("schema_version") /= Create ("1.0")
+        or else GNATCOLL.JSON.Get (Root.Get ("schema_version")) /= "1.0"
       then
          raise Config_Error with "schema_version must be exactly 1.0";
       end if;
@@ -151,15 +151,6 @@ package body Lexer_Config is
             end;
             Def.Name := Name;
             Def.Matcher := Parse_Matcher (To_String (Matcher_Name));
-
-            if Def.Matcher not in Literal | Line_Comment then
-               for Existing of Result.Definitions loop
-                  if Existing.Matcher = Def.Matcher then
-                     raise Config_Error with
-                       "duplicate generic matcher: " & To_String (Matcher_Name);
-                  end if;
-               end loop;
-            end if;
 
             Has_Value := Item.Has_Field ("value");
             if Def.Matcher in Literal | Line_Comment then
