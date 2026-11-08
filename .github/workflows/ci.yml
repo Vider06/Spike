@@ -108,7 +108,7 @@ jobs:
       - name: Audit GitHub Actions with zizmor
         uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b
         with:
-          version: v1.32.0
+          version: v1.31.1
           advanced-security: false
 
   ci-summary:
