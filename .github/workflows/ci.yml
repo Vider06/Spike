@@ -70,6 +70,17 @@ jobs:
       - name: Run SPARK legality, flow analysis, and proofs
         run: alr exec -- python scripts/ci/run.py prove
 
+      - name: Archive SPARK proof report and statistics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: spark-proof-report
+          path: |
+            build/ci/gnatprove.log
+            build/ci/gnatprove-statistics.json
+          if-no-files-found: warn
+          retention-days: 90
+
   workflow-security:
     name: Workflow lint and security audit
     runs-on: ubuntu-24.04
