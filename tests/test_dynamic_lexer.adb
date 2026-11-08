@@ -176,7 +176,7 @@ begin
       begin
          declare
             Bad_Stream : constant Token_Stream.Stream :=
-              Token_Stream.Create (Invalid_Items);
+              Token_Stream.Create (Invalid_Items, 3);
          begin
             pragma Unreferenced (Bad_Stream);
          end;
