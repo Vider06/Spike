@@ -4,6 +4,7 @@ package VM_Instructions
   with SPARK_Mode => On
 is
    subtype Register_Index is Machine_State.Register_Index;
+   use type Machine_State.Execution_Status;
 
    procedure Mov
      (State : in out Machine_State.Machine_State;
