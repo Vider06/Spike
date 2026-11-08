@@ -15,44 +15,46 @@ Deliverables:
 - Deterministic reset state and instruction-step contract.
 - Normative semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT.
 - Positive, negative, boundary, aliasing, and state-transition test vectors.
-- Explicit exclusion of memory, stack, calls, branches, and host services from this first subset.
 
 **Exit:** every instruction in the subset has complete operands, state effects, flag behavior, and test vectors.
 
-## Phase 2 — Virtual machine state implementation
+## Phase 2 — VM state and safety substrate
 
-Implement the machine-state types and invariant-preserving operations in Ada 2022, using SPARK for the bounded deterministic core.
+Implement the machine-state types and invariant-preserving operations in Ada 2022, using SPARK for bounded deterministic logic.
 
 Deliverables:
-- Register and flag types.
-- Machine state and execution-state types.
-- Deterministic initialization.
-- Checked register-index access.
-- Contracts and unit tests for state invariants.
+- Sixteen virtual registers, PC, flags, execution status, and structured terminal fault state.
+- Deterministic initialization and reset.
+- Finite virtual byte memory with an explicitly bounded region table.
+- Non-overlapping mapped regions with read, write, and execute permissions.
+- W^X enforcement and checked byte reads, writes, and instruction fetches.
+- Tests for region boundaries, overlap, unmapped addresses, permission failures, and fault-state invariants.
 
-**Exit:** the machine-state package compiles, its tests pass, and GNATprove results are recorded for the units actually in SPARK.
+**Exit:** state and memory packages compile; unit tests pass; GNATprove results document exactly which contracts and checks are proved.
 
-## Phase 3 — Frontend and Quick Engine
+## Phase 3 — VM semantic operations
 
-Implement lexer, parser, semantic validation, validated instruction records, and the Quick interpreter.
+Implement the virtual instruction semantics and atomic state transitions. Keep these independent of source parsing and host execution.
 
-**Exit:** the semantic vectors pass in Quick mode; malformed source produces diagnostics rather than uncontrolled termination.
+**Exit:** the normative instruction vectors pass without a parser, interpreter loop, or native backend.
 
-## Phase 4 — Memory and control-flow extensions
+## Phase 4 — Frontend and Quick Engine (not part of the current VM-only work)
 
-Specify and implement memory regions, loads/stores, faults, branches, stack behavior, and calls in dependency order. Each feature requires normative semantics and tests before implementation.
+Implement lexer, parser, semantic validation, validated instruction records, and the Quick interpreter only in a later, separately scoped change.
 
-## Phase 5 — x86-64 backend
+## Phase 5 — Memory and control-flow extensions
 
-Lower the validated virtual instructions to x86-64 while preserving virtual state and flag semantics. Add encoding tests, branch fixups, and differential tests.
+Specify and implement multi-byte loads/stores, stack behavior, branches, and calls in dependency order. Each feature requires normative semantics and tests before implementation.
 
-**Exit:** every claimed native instruction has independent encoding evidence and Quick/Native parity tests.
+## Phase 6 — x86-64 backend
 
-## Phase 6 — Object output and hosted execution
+Lower validated virtual instructions to x86-64 while preserving virtual state and flag semantics. Add encoding tests, branch fixups, and differential tests.
+
+## Phase 7 — Object output and hosted execution
 
 Add ELF64 relocatable output for the declared hosted Linux x86-64 profile, symbols, relocations, and external linker integration.
 
-## Phase 7 — Conformance and 0.1 stabilization
+## Phase 8 — Conformance and 0.1 stabilization
 
 Deliver conformance fixtures, differential/property tests, fuzzing, scoped SPARK proof reports, examples, user documentation, and an accurate feature matrix.
 
