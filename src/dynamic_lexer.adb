@@ -1,6 +1,7 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.JSON;
 with Lexer_Properties;
+use type GNATCOLL.JSON.JSON_Value_Type;
 
 package body Dynamic_Lexer is
    use Lexer_Config;
@@ -121,8 +122,12 @@ package body Dynamic_Lexer is
                      then
                         return Result;
                      end if;
-                     Result.Value := To_Unbounded_String
-                       (GNATCOLL.JSON.Get (Parsed.Value));
+                     declare
+                        Decoded_Text : constant String :=
+                          GNATCOLL.JSON.Get (Parsed.Value);
+                     begin
+                        Result.Value := To_Unbounded_String (Decoded_Text);
+                     end;
                      Result.Length := Last - Source_Position + 1;
                      Result.Lexeme := To_Unbounded_String (Source (Source_Position .. Last));
                      Result.Def := Def;
@@ -238,13 +243,14 @@ package body Dynamic_Lexer is
 
             if Best.Def.Emit then
                Output.Append
-                 ((Kind => Best.Def.Name,
-                   Lexeme => Best.Lexeme,
-                   Value => Best.Value,
-                   Start_Offset => Offset,
-                   End_Offset => Offset + Best.Length,
-                   Line => Line,
-                   Column => Column));
+                 (Token'
+                    (Kind => Best.Def.Name,
+                     Lexeme => Best.Lexeme,
+                     Value => Best.Value,
+                     Start_Offset => Offset,
+                     End_Offset => Offset + Best.Length,
+                     Line => Line,
+                     Column => Column));
             end if;
 
             for I in Source_Position .. Source_Position + Best.Length - 1 loop

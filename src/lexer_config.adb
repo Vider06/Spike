@@ -125,7 +125,11 @@ package body Lexer_Config is
             then
                raise Config_Error with "token name must be a string";
             end if;
-            Name := To_Unbounded_String (Item.Get ("name"));
+            declare
+               Name_Text : constant String := GNATCOLL.JSON.Get (Item.Get ("name"));
+            begin
+               Name := To_Unbounded_String (Name_Text);
+            end;
             if not Valid_Name (To_String (Name)) then
                raise Config_Error with "token name must be an ASCII identifier";
             end if;
@@ -140,7 +144,11 @@ package body Lexer_Config is
             then
                raise Config_Error with "token matcher must be a string";
             end if;
-            Matcher_Name := To_Unbounded_String (Item.Get ("matcher"));
+            declare
+               Matcher_Text : constant String := GNATCOLL.JSON.Get (Item.Get ("matcher"));
+            begin
+               Matcher_Name := To_Unbounded_String (Matcher_Text);
+            end;
             Def.Name := Name;
             Def.Matcher := Parse_Matcher (To_String (Matcher_Name));
 
@@ -155,12 +163,19 @@ package body Lexer_Config is
 
             Has_Value := Item.Has_Field ("value");
             if Def.Matcher in Literal | Line_Comment then
-               if not Has_Value or else Item.Get ("value").Kind /= JSON_String_Type
-                 or else Item.Get ("value").Get = ""
-               then
-                  raise Config_Error with "literal and line_comment require non-empty value";
+               if not Has_Value or else Item.Get ("value").Kind /= JSON_String_Type then
+                  raise Config_Error with "literal and line_comment require a string value";
                end if;
-               Def.Value := To_Unbounded_String (Item.Get ("value"));
+               declare
+                  Token_Text : constant String :=
+                    GNATCOLL.JSON.Get (Item.Get ("value"));
+               begin
+                  if Token_Text'Length = 0 then
+                     raise Config_Error with
+                       "literal and line_comment require non-empty value";
+                  end if;
+                  Def.Value := To_Unbounded_String (Token_Text);
+               end;
             elsif Has_Value then
                raise Config_Error with "value is only valid for literal and line_comment";
             end if;
@@ -172,7 +187,9 @@ package body Lexer_Config is
                declare
                   P : constant Long_Long_Integer := Item.Get ("priority").Get;
                begin
-                  if P < Integer'First or else P > Integer'Last then
+                  if P < Long_Long_Integer (Integer'First)
+                    or else P > Long_Long_Integer (Integer'Last)
+                  then
                      raise Config_Error with "priority is outside Ada Integer range";
                   end if;
                   Def.Priority := Integer (P);
