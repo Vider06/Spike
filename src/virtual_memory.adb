@@ -11,10 +11,10 @@ is
    procedure Initialize (State : out Memory) is
    begin
       State :=
-        (Storage => (others => 0),
-         Regions => (others =>
+        (Storage => [others => 0],
+         Regions => [others =>
            (Start => 0, Length => 0,
-            Rights => (Read => False, Write => False, Execute => False))),
+            Rights => (Read => False, Write => False, Execute => False))],
          Count => 0);
    end Initialize;
 
