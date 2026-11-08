@@ -37,7 +37,7 @@ Implement lexer, parser, semantic validation, validated instruction records, and
 
 ## Phase 5 — Memory and control-flow extensions
 
-Multi-byte word access, stack behavior, and flag-driven branch primitives are implemented. The remaining VM work is call/return integration, instruction-address semantics, and any additional primitive required by the interpreter-host contract. Each feature requires normative semantics and tests before implementation.
+Multi-byte word access, bounded stack behavior, flag-driven branches, and stack-backed CALL/RETURN are implemented as VM APIs. The remaining VM work is memory-operation integration with machine state, final fault propagation policy, and any additional primitive required by the interpreter-host contract. Each feature requires normative semantics and tests before implementation.
 
 ## Phase 6 — x86-64 backend
 
