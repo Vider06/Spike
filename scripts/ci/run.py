@@ -306,7 +306,7 @@ def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[
 
     def reported_count(patterns: tuple[str, ...]) -> int | None:
         for pattern in patterns:
-            match = re.search(pattern, log_text, re.IGNORECASE)
+            match = re.search(pattern, combined_text, re.IGNORECASE)
             if match:
                 return int(match.group(1).replace(",", ""))
         return None
@@ -354,11 +354,11 @@ def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[
         "requested_units": list(SPARK_UNITS),
         "units_mentioned_in_output": observed_units,
         "checks_total": cell_count(0),
-        "checks_proved": sum(proved_parts) if summary_cells else reported_count(
+        "checks_proved": sum(proved_parts) if len(summary_cells) >= 6 else reported_count(
             (r"(\d[\d,]*)\s+checks?\s+proved", r"proved\s+checks?:\s*(\d[\d,]*)")
         ),
         "checks_justified": justified_count,
-        "checks_not_proved": unproved_count if summary_cells else reported_count(
+        "checks_not_proved": unproved_count if len(summary_cells) >= 6 else reported_count(
             (
                 r"(\d[\d,]*)\s+checks?\s+(?:not proved|unproved)",
                 r"(?:not proved|unproved)\s+checks?:\s*(\d[\d,]*)",
