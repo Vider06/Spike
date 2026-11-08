@@ -221,6 +221,8 @@ def run_secrets() -> None:
         "--all-files",
         "--exclude-files",
         r"(^|/)(\.git|build|\.alire|__pycache__|\.pytest_cache)(/|$)",
+        "--exclude-lines",
+        r"uses:\s*[^@\s]+@[0-9a-f]{40}",
     ]
     result = subprocess.run(
         command,
