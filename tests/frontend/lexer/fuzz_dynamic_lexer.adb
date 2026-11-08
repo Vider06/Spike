@@ -16,7 +16,7 @@ procedure Fuzz_Dynamic_Lexer is
    end Next_Byte;
 
    Config : constant Lexer_Config.Lexer_Configuration :=
-     Lexer_Config.Load ("config/lexer/tokens.json");
+     Lexer_Config.Load ("src/leng/lexer/tokens.json");
 begin
    for Round in 1 .. 2_000 loop
       pragma Unreferenced (Round);

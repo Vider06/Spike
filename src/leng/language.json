@@ -1,0 +1,13 @@
+{
+  "format_version": "1.0",
+  "language": {
+    "name": "Spike",
+    "source_extension": ".spike"
+  },
+  "definitions": {
+    "lexer": {
+      "tokens": "lexer/tokens.json",
+      "schema": "lexer/tokens.schema.json"
+    }
+  }
+}

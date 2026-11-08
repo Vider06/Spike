@@ -31,8 +31,13 @@ REQUIRED_FILES = (
     ".github/dependabot.yml",
     "alire.toml",
     "scripts/ci/requirements.txt",
-    "tests/prove_virtual_memory.adb",
-    "tests/prove_vm_stack.adb",
+    "src/frontend/lexer/dynamic_lexer.adb",
+    "src/leng/language.json",
+    "src/leng/language.schema.json",
+    "src/leng/lexer/tokens.json",
+    "src/leng/lexer/tokens.schema.json",
+    "tests/proofs/vm/prove_virtual_memory.adb",
+    "tests/proofs/vm/prove_vm_stack.adb",
 )
 ADA_TESTS = (
     "test_machine_state",
@@ -146,7 +151,23 @@ def inspect_text_file(relative_path: str, content: bytes) -> list[str]:
 def workflow_policy_findings(content: str, relative_path: str) -> list[str]:
     """Enforce least privilege, pinned actions, and bounded CI execution."""
     findings: list[str] = []
-    if not re.search(r"(?m)^permissions:\s*\{\}\s*$", content):
+    workflow_header = content.split("\\njobs:", 1)[0]
+    header_lines = workflow_header.splitlines()
+    trigger_index = next(
+        (index for index, line in enumerate(header_lines) if line == "on:"), None
+    )
+    trigger_events: list[str] = []
+    if trigger_index is not None:
+        for line in header_lines[trigger_index + 1 :]:
+            if not line.strip():
+                continue
+            if not line.startswith(" "):
+                break
+            if len(line) - len(line.lstrip(" ")) == 2 and line.strip().endswith(":"):
+                trigger_events.append(line.strip()[:-1])
+    if trigger_events != ["push"]:
+        findings.append(f"{relative_path}: CI must have exactly one trigger: push")
+    if not re.search(r"(?m)^permissions:\\s*\\{\\}\\s*$", content):
         findings.append(f"{relative_path}: workflow-level permissions must default to empty")
     if re.search(r"(?m)^\s*(pull_request_target|workflow_run):", content):
         findings.append(f"{relative_path}: privileged trigger is not allowed in this CI workflow")

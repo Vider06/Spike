@@ -9,7 +9,7 @@ with Token_Stream;
 
 procedure Test_Dynamic_Lexer is
    Config : constant Lexer_Config.Lexer_Configuration :=
-     Lexer_Config.Load ("config/lexer/tokens.json");
+     Lexer_Config.Load ("src/leng/lexer/tokens.json");
    Tokens : Token_Stream.Stream :=
      Dynamic_Lexer.Tokenize (Config, "out.term ""Hello"" " & ASCII.LF & "R0, 42");
    Item : Token_Stream.Token;

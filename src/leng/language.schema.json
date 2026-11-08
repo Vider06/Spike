@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Vider06/Spike/blob/main/src/leng/language.schema.json",
+  "title": "Spike language definition manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format_version", "language", "definitions"],
+  "properties": {
+    "format_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "language": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "source_extension"],
+      "properties": {
+        "name": {"type": "string", "const": "Spike"},
+        "source_extension": {"type": "string", "const": ".spike"}
+      }
+    },
+    "definitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lexer"],
+      "properties": {
+        "lexer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tokens", "schema"],
+          "properties": {
+            "tokens": {"type": "string", "const": "lexer/tokens.json"},
+            "schema": {"type": "string", "const": "lexer/tokens.schema.json"}
+          }
+        }
+      }
+    }
+  }
+}

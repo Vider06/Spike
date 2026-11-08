@@ -3,13 +3,7 @@ name: Spike CI
 on:
   push:
     branches:
-      - main
-      - build/Spike0.2
-  pull_request:
-    branches:
-      - main
-      - build/Spike0.2
-  workflow_dispatch:
+      - '**'
 
 permissions: {}
 
