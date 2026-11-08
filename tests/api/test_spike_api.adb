@@ -10,7 +10,7 @@ procedure Test_Spike_API is
      Spike_API.Tokenize_Source (Config, "out.term 42");
    Item : Spike_API.Token_Info;
 begin
-   Assert (Spike_API.API_Version = "1.0", "public API version");
+   Assert (Spike_API.Version = "1.0", "public API version");
    Assert (Spike_API.Remaining (Stream) = 4, "API exposes emitted token count");
    Assert (To_String (Spike_API.Peek_Token (Stream).Kind) = "IDENTIFIER",
            "API peek returns the first token without consuming");
