@@ -70,6 +70,11 @@ is
        Pre => Current_Status (State) = Running,
        Post =>
          Get_Register (State, Index) = Value
+         and then
+           (for all Other in Register_Index =>
+              (if Other /= Index then
+                 Get_Register (State, Other) =
+                   Get_Register (State'Old, Other)))
          and then Program_Counter (State) = Program_Counter (State'Old)
          and then Stack_Pointer (State) = Stack_Pointer (State'Old)
          and then Get_Flags (State) = Get_Flags (State'Old)
