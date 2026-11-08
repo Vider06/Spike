@@ -7,6 +7,7 @@ package VM_Stack
   with SPARK_Mode => On
 is
    use type Memory_Model.Address;
+   use type Memory_Model.Memory_Result;
    use type Machine_State.Execution_Status;
    use type Machine_State.Word;
 
