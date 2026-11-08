@@ -19,11 +19,12 @@ All jobs use Ubuntu 24.04 and a 60-minute timeout. Workflow permissions default 
 
 The workflow uses the Alire setup action to install Alire, GNAT Native, and GPRbuild. It then installs GNATprove through Alire. Alire provides the Ada toolchain as a matched GNAT/GPRbuild pair; GNATprove is the SPARK formal verification tool.
 
-The build uses Ada 2022, assertions, validity checks, overflow checks, all GNAT warnings, and warnings-as-errors. The GPR project declares three test mains:
+The build uses Ada 2022, assertions, validity checks, overflow checks, all GNAT warnings, and warnings-as-errors. The GPR project declares three runtime test mains and one proof-harness main:
 
 - `test_machine_state`
 - `test_virtual_memory`
 - `test_vm_instructions`
+- `prove_virtual_memory` (a SPARK instantiation harness and memory smoke test)
 
 GNATprove analyzes the machine-state and instruction implementation units plus a concrete SPARK memory proof harness that instantiates the generic memory package. Runtime test mains are compiled and executed separately; they are not treated as formal proof harnesses. The proof gate uses full legality/flow/proof mode, proof level 2, warnings-as-errors, and unproved-checks-as-errors. It cannot pass merely because GNATprove exits successfully without proving its generated checks.
 

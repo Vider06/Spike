@@ -28,6 +28,7 @@ REQUIRED_FILES = (
     ".github/dependabot.yml",
     "alire.toml",
     "scripts/ci/requirements.txt",
+    "tests/prove_virtual_memory.adb",
 )
 ADA_TESTS = (
     "test_machine_state",
@@ -267,7 +268,7 @@ def run_ada() -> None:
     execute("GNAT compiler version", ["gnat", "--version"])
     execute("GPRbuild version", ["gprbuild", "--version"])
     execute(
-        "Compile every declared VM test target",
+        "Compile every VM test and proof-harness target",
         ["gprbuild", "-P", "spike.gpr", "-p", "-f", "-j0"],
         log_name="ada-build.log",
     )

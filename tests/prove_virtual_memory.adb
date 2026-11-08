@@ -6,6 +6,7 @@ is
    package Proof_Memory is new Virtual_Memory
      (Capacity => 256, Max_Regions => 4);
    use Proof_Memory;
+   use type Byte;
 
    State : Memory;
    Result : Memory_Result;
