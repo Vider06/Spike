@@ -50,6 +50,15 @@ is
      is (Cursor <= Token_Count)
      with Global => null;
 
+   procedure Advance_Offset
+     (Offset, Amount, Source_Length : in out Natural)
+     with
+       Global => null,
+       Pre => Offset <= Source_Length
+         and then Amount <= Source_Length - Offset,
+       Post => Offset = Offset'Old + Amount'Old
+         and then Offset <= Source_Length;
+
    procedure Advance_Cursor (Cursor : in out Natural; Token_Count : Natural)
      with
        Global => null,
