@@ -13,6 +13,7 @@ is
       State :=
         (Registers => [others => 0],
          PC        => 0,
+         SP        => 0,
          Flags     => (Z => False, N => False, C => False, V => False),
          Status    => Running,
          Fault     => No_Fault);
@@ -31,6 +32,13 @@ is
    begin
       State.PC := Value;
    end Set_Program_Counter;
+
+   procedure Set_Stack_Pointer
+     (State : in out Machine_State; Value : Word)
+   is
+   begin
+      State.SP := Value;
+   end Set_Stack_Pointer;
 
    procedure Set_Flags
      (State : in out Machine_State; Value : Status_Flags)
