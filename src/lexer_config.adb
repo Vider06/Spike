@@ -104,6 +104,8 @@ package body Lexer_Config is
       Items := Root.Get ("tokens");
       if Length (Items) = 0 then
          raise Config_Error with "tokens must be a non-empty array";
+      elsif Length (Items) > 4_096 then
+         raise Config_Error with "token definition limit (4096) exceeded";
       end if;
       Result.Schema_Version := To_Unbounded_String ("1.0");
 
