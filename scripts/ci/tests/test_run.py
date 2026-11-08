@@ -56,6 +56,21 @@ class ProofStatisticsTests(unittest.TestCase):
         self.assertIsNone(report["maximum_rss_kib"])
         self.assertEqual(report["provers_detected"], [])
 
+    def test_parses_gnatprove_project_summary_table(self) -> None:
+        project_report = (
+            "SPARK Analysis results        Total          Flow   Interval"
+            "                         Provers   Justified   Unproved\n"
+            "Total                          2025    1201 (59%)          ."
+            "                       805 (40%)     19 (1%)          .\n"
+            "max steps used for successful proof: 1234\n"
+        )
+        report = _proof_report_metrics("", project_report)
+        self.assertEqual(report["checks_total"], 2025)
+        self.assertEqual(report["checks_proved"], 2006)
+        self.assertEqual(report["checks_justified"], 19)
+        self.assertEqual(report["checks_not_proved"], 0)
+        self.assertEqual(report["max_steps_used"], 1234)
+
 
 class WorkflowPolicyTests(unittest.TestCase):
     def test_unpinned_action_is_rejected(self) -> None:
