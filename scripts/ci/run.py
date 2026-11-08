@@ -315,7 +315,7 @@ def run_ada() -> None:
     execute("GNAT compiler version", ["gnat", "--version"])
     execute("GPRbuild version", ["gprbuild", "--version"])
     execute(
-        "Compile every VM test and proof-harness target",
+        "Compile every API, VM, lexer test and proof-harness target",
         ["gprbuild", "-P", "spike.gpr", "-p", "-f", "-j0"],
         log_name="ada-build.log",
     )
