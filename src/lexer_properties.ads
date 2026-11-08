@@ -51,7 +51,7 @@ is
      with Global => null;
 
    procedure Advance_Offset
-     (Offset, Amount, Source_Length : in out Natural)
+     (Offset : in out Natural; Amount, Source_Length : Natural)
      with
        Global => null,
        Pre => Offset <= Source_Length
