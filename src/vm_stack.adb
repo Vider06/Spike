@@ -100,4 +100,41 @@ is
          end if;
       end if;
    end Pop;
+   procedure Call
+     (State : Stack;
+      CPU : in out Machine_State.Machine_State;
+      Memory : in out Memory_Model.Memory;
+      Target : Machine_State.Word;
+      Result : out Stack_Result;
+      Memory_Error : out Memory_Model.Memory_Result)
+   is
+      Return_Address : Machine_State.Word;
+   begin
+      if Machine_State.Program_Counter (CPU) = Machine_State.Word'Last then
+         Result := Invalid_Return_Address;
+         Memory_Error := Memory_Model.Invalid_Range;
+         return;
+      end if;
+
+      Return_Address := Machine_State.Program_Counter (CPU) + 1;
+      Push (State, CPU, Memory, Return_Address, Result, Memory_Error);
+      if Result = Success then
+         Machine_State.Set_Program_Counter (CPU, Target);
+      end if;
+   end Call;
+
+   procedure Return_From_Call
+     (State : Stack;
+      CPU : in out Machine_State.Machine_State;
+      Memory : Memory_Model.Memory;
+      Result : out Stack_Result;
+      Memory_Error : out Memory_Model.Memory_Result)
+   is
+      Return_Address : Machine_State.Word;
+   begin
+      Pop (State, CPU, Memory, Return_Address, Result, Memory_Error);
+      if Result = Success then
+         Machine_State.Set_Program_Counter (CPU, Return_Address);
+      end if;
+   end Return_From_Call;
 end VM_Stack;
