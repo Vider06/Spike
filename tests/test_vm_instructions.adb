@@ -65,11 +65,11 @@ begin
    --  Branch conditions inspect flags without modifying them.
    Set_Flags (State, (Z => True, N => False, C => True, V => False));
    Set_Program_Counter (State, 10);
-   VM_Instructions.Branch (State, Zero_Set, 20);
+   VM_Instructions.Branch (State, VM_Instructions.Zero_Set, 20);
    pragma Assert (Program_Counter (State) = 20);
-   VM_Instructions.Branch (State, Carry_Clear, 30);
+   VM_Instructions.Branch (State, VM_Instructions.Carry_Clear, 30);
    pragma Assert (Program_Counter (State) = 20);
-   VM_Instructions.Branch (State, Always, 40);
+   VM_Instructions.Branch (State, VM_Instructions.Always, 40);
    pragma Assert (Program_Counter (State) = 40);
    pragma Assert
      (Get_Flags (State) = (Z => True, N => False, C => True, V => False));
