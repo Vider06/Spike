@@ -26,6 +26,7 @@ REQUIRED_FILES = (
     ".yamllint",
     ".github/workflows/ci.yml",
     ".github/dependabot.yml",
+    "alire.toml",
     "scripts/ci/requirements.txt",
 )
 ADA_TESTS = (
@@ -35,8 +36,10 @@ ADA_TESTS = (
 )
 SPARK_UNITS = (
     "machine_state.adb",
-    "virtual_memory.adb",
     "vm_instructions.adb",
+    "test_machine_state.adb",
+    "test_virtual_memory.adb",
+    "test_vm_instructions.adb",
 )
 
 
@@ -210,7 +213,7 @@ def run_hygiene() -> None:
     execute("Compile CI Python", [sys.executable, "-m", "compileall", "-q", "scripts/ci"])
     execute(
         "Run CI helper unit tests",
-        [sys.executable, "-m", "unittest", "discover", "-s", "scripts/ci/tests", "-v"],
+        [sys.executable, "-m", "unittest", "discover", "-s", "scripts/ci/tests", "-t", ".", "-v"],
     )
 
 

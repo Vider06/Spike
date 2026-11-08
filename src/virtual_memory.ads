@@ -73,4 +73,7 @@ private
          Rights => (Read => False, Write => False, Execute => False))];
       Count : Natural range 0 .. Max_Regions := 0;
    end record;
+
+   function Region_Count (State : Memory) return Natural
+   is (State.Count);
 end Virtual_Memory;

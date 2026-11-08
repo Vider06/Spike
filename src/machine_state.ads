@@ -127,4 +127,20 @@ private
       Status : Execution_Status := Running;
       Fault : Fault_Kind := No_Fault;
    end record;
+
+   function Get_Register
+     (State : Machine_State; Index : Register_Index) return Word
+   is (State.Registers (Index));
+
+   function Program_Counter (State : Machine_State) return Word
+   is (State.PC);
+
+   function Get_Flags (State : Machine_State) return Status_Flags
+   is (State.Flags);
+
+   function Current_Status (State : Machine_State) return Execution_Status
+   is (State.Status);
+
+   function Last_Fault (State : Machine_State) return Fault_Kind
+   is (State.Fault);
 end Machine_State;

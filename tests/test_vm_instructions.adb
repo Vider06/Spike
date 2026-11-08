@@ -1,7 +1,9 @@
 with Machine_State;
 with VM_Instructions;
 
-procedure Test_VM_Instructions is
+procedure Test_VM_Instructions
+  with SPARK_Mode => On
+is
    use Machine_State;
    use VM_Instructions;
    use type Machine_State.Word;

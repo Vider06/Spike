@@ -1,11 +1,6 @@
 package body Virtual_Memory
   with SPARK_Mode => On
 is
-   function Region_Count (State : Memory) return Natural is
-   begin
-      return State.Count;
-   end Region_Count;
-
    procedure Initialize (State : out Memory) is
    begin
       State :=
