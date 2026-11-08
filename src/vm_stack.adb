@@ -113,13 +113,9 @@ is
    is
       Return_Address : Machine_State.Word;
    begin
-      if Machine_State.Program_Counter (CPU) = Machine_State.Word'Last then
-         Result := Invalid_Return_Address;
-         Memory_Error := Memory_Model.Invalid_Range;
-         return;
-      end if;
-
-      Return_Address := Machine_State.Program_Counter (CPU) + 1;
+      --  The VM step contract advances PC before applying instruction
+      --  semantics, so PC already identifies the return instruction.
+      Return_Address := Machine_State.Program_Counter (CPU);
       Push (State, CPU, Memory, Return_Address, Result, Memory_Error);
       if Result = Success then
          Machine_State.Set_Program_Counter (CPU, Target);
