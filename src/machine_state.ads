@@ -14,31 +14,20 @@ is
    end record;
 
    type Execution_Status is (Running, Halted, Faulted);
-
    type Fault_Kind is
-     (No_Fault,
-      Invalid_Instruction,
-      Invalid_Address,
-      Unmapped_Memory,
-      Permission_Denied,
-      Stack_Bounds,
-      Invalid_Machine_State);
+     (No_Fault, Invalid_Instruction, Invalid_Address, Unmapped_Memory,
+      Permission_Denied, Stack_Bounds, Invalid_Machine_State);
 
    type Machine_State is private;
 
-   function Get_Register
-     (State : Machine_State; Index : Register_Index) return Word
+   function Get_Register (State : Machine_State; Index : Register_Index) return Word
      with Global => null;
-
    function Program_Counter (State : Machine_State) return Word
      with Global => null;
-
    function Get_Flags (State : Machine_State) return Status_Flags
      with Global => null;
-
    function Current_Status (State : Machine_State) return Execution_Status
      with Global => null;
-
    function Last_Fault (State : Machine_State) return Fault_Kind
      with Global => null;
 
@@ -108,20 +97,16 @@ is
        Pre => Current_Status (State) = Running,
        Post =>
          Current_Status (State) = Halted
-         and then Last_Fault (State) = No_Fault
          and then Program_Counter (State) = Program_Counter (State'Old)
          and then Get_Flags (State) = Get_Flags (State'Old)
          and then
            (for all Index in Register_Index =>
               Get_Register (State, Index) = Get_Register (State'Old, Index));
 
-   procedure Raise_Fault
-     (State : in out Machine_State; Reason : Fault_Kind)
+   procedure Raise_Fault (State : in out Machine_State; Reason : Fault_Kind)
      with
        Global => null,
-       Pre =>
-         Current_Status (State) = Running
-         and then Reason /= No_Fault,
+       Pre => Current_Status (State) = Running and then Reason /= No_Fault,
        Post =>
          Current_Status (State) = Faulted
          and then Last_Fault (State) = Reason
@@ -133,12 +118,11 @@ is
 
 private
    type Register_File is array (Register_Index) of Word;
-
    type Machine_State is record
       Registers : Register_File := (others => 0);
-      PC        : Word := 0;
-      Flags     : Status_Flags := (Z => False, N => False, C => False, V => False);
-      Status    : Execution_Status := Running;
-      Fault     : Fault_Kind := No_Fault;
+      PC : Word := 0;
+      Flags : Status_Flags := (Z => False, N => False, C => False, V => False);
+      Status : Execution_Status := Running;
+      Fault : Fault_Kind := No_Fault;
    end record;
 end Machine_State;
