@@ -39,6 +39,7 @@ ADA_TESTS = (
     "test_virtual_memory",
     "test_vm_instructions",
     "test_vm_stack",
+    "test_dynamic_lexer",
     "prove_virtual_memory",
     "prove_vm_stack",
 )
@@ -587,7 +588,7 @@ def write_summary() -> None:
             "",
             "## VM scope",
             "",
-            "This workflow validates the implemented VM core only. It does not build or test an interpreter, parser, frontend, or native backend.",
+            "This workflow validates the VM core and the native Ada JSON-driven lexer foundation. It does not yet validate a complete parser, interpreter, or native backend.",
             "",
         ]
     )

@@ -1,53 +1,50 @@
-# Dynamic Lexer Architecture
+# Dynamic Lexer
 
-**Status:** Bootstrap implementation; JSON contract 1.0.
+Spike's lexer is implemented natively in Ada 2022. The JSON file
+`config/lexer/tokens.json` is the source of truth for token definitions:
+adding or changing token definitions does not require editing lexer code.
 
-Spike's lexical rules are data-driven. The lexer engine does not contain Spike
-keywords or instruction names. Token definitions are loaded from a versioned
-JSON document, validated, and then used to produce a source-positioned token
-stream.
+## Architecture
 
-## Components
+- `Lexer_Config` parses and validates the JSON configuration using
+  GNATCOLL.JSON. It rejects unknown fields, unsupported matcher names,
+  invalid token identifiers, duplicate names, malformed values, invalid
+  priorities, and ambiguous duplicate literals.
+- `Dynamic_Lexer` performs deterministic maximal-munch matching. The longest
+  match wins; priority breaks length ties. An unresolved equal-priority tie
+  is an error. No executable code or arbitrary regular expressions are loaded
+  from JSON.
+- `Token_Stream` owns the emitted tokens and provides bounded lookahead,
+  consumption, expectation, remaining-count, and reset operations. A failed
+  expectation does not consume the mismatched token.
 
-1. **JSON contract** — `config/lexer/tokens.schema.json` defines the structural
-   schema; `config/lexer/tokens.json` is the initial definition set.
-2. **Validator** — rejects unsupported schema versions, malformed entries,
-   duplicate token names, invalid matcher/value combinations, and ambiguous
-   same-priority literals.
-3. **Dynamic lexer** — applies configured matchers using maximal munch (longest
-   match), then configured priority to break equal-length matches.
-4. **Token stream** — immutable token records with kind, lexeme, decoded value,
-   source-character offsets, and one-based line/column.
+## JSON contract
 
-## Supported matcher primitives
+The root object requires `schema_version: "1.0"` and a non-empty `tokens`
+array. Each token has a unique ASCII identifier `name`, a supported
+`matcher`, optional integer `priority` (default 0), and optional boolean
+`emit` (default true). `literal` and `line_comment` require a non-empty
+string `value`; other matchers reject `value`.
 
-The initial safe matcher vocabulary is literal, identifier, decimal integer,
-hex integer, binary integer, quoted string, whitespace, and line comment.
-Definitions may choose token names, priorities, and whether a match is emitted.
-The JSON format intentionally does not execute code or accept arbitrary regular
-expressions. This avoids turning configuration into executable input and avoids
-unbounded regex behavior.
+Supported matchers are `literal`, `identifier`, `decimal_integer`,
+`hex_integer`, `binary_integer`, `quoted_string`, `whitespace`, and
+`line_comment`. Identifiers and numeric digits are ASCII-defined. Quoted
+strings use JSON string escaping and are decoded by the JSON implementation.
+Whitespace recognizes space, horizontal tab, carriage return, and line feed.
 
-A line-comment definition uses its `value` as the marker. The comment marker
-is therefore selected by configuration rather than hard-coded in the engine.
-The initial token set leaves comments disabled until the language design picks
-the source comment syntax.
+## Coordinates and errors
 
-## Matching rules
+Offsets and columns are byte-based (UTF-8 byte offsets), while line numbers
+advance on LF. This is explicit so parser diagnostics can map directly to
+source buffers. Invalid JSON, invalid definitions, ambiguous matching, and
+unrecognized source bytes fail with typed exceptions rather than silently
+skipping input.
 
-At each source offset, every configured matcher is considered. The longest
-match wins; priority resolves equal-length matches. An unresolved equal-length,
-equal-priority collision is a lexical error. Whitespace and other non-emitted
-definitions still advance source positions.
+## Verification boundary
 
-Strings currently use JSON string escaping. This is an initial lexical
-implementation detail, not a decision that Spike source strings must
-permanently use JSON escape semantics.
-
-## Bootstrap implementation boundary
-
-The executable reference implementation is under `tools/lexer/` and uses only
-the Python standard library so the JSON contract can be exercised without
-coupling the VM's Ada/SPARK packages to a parser dependency. The parser-facing
-token record is deliberately stable and language-neutral. A production Ada
-implementation can consume the same versioned contract later.
+The JSON adapter and dynamic string/container operations are Ada runtime
+components. They are not currently claimed as SPARK-proved. The package
+boundary is isolated so bounded, proof-oriented lexer state and token-stream
+invariants can be moved into SPARK-compatible types without changing the JSON
+contract. CI compiles and executes the native Ada lexer tests; the existing
+SPARK proof gate remains separate and does not imply lexer proofs.
