@@ -4,6 +4,7 @@ procedure Test_Virtual_Memory is
    package Test_Memory is new Virtual_Memory
      (Capacity => 256, Max_Regions => 2);
    use Test_Memory;
+   use type Byte;
 
    State : Memory;
    Result : Memory_Result;
