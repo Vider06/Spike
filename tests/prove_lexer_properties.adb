@@ -29,6 +29,8 @@ begin
    pragma Assert (Lexer_Properties.Better_Match (3, 0, 2, 100));
    pragma Assert (Lexer_Properties.Better_Match (3, 2, 3, 1));
    pragma Assert (not Lexer_Properties.Better_Match (3, 1, 3, 2));
+   pragma Assert (Lexer_Properties.Match_Tied (3, 1, 3, 1));
+   pragma Assert (not Lexer_Properties.Match_Tied (3, 1, 2, 1));
    pragma Assert (Lexer_Properties.Cursor_In_Bounds (0, 0));
    pragma Assert (Lexer_Properties.Cursor_In_Bounds (4, 4));
    Lexer_Properties.Advance_Cursor (Cursor, 1);
