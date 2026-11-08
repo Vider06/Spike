@@ -10,7 +10,7 @@ procedure Test_VM_Instructions is
 begin
    Reset (State);
 
-   Set_Register (State, 1, Machine_State.Machine_State.Word'Last);
+   Set_Register (State, 1, Machine_State.Word'Last);
    Set_Register (State, 2, 1);
    VM_Instructions.Add (State, 3, 1, 2);
    pragma Assert (Get_Register (State, 3) = 0);
