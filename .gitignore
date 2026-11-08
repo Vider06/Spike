@@ -1,0 +1,22 @@
+# Ada and GPRbuild outputs
+build/
+obj/
+*.ali
+*.o
+*.bexch
+*.stdout
+*.stderr
+*.gcda
+*.gcno
+*.gcov
+*.trace
+
+# Alire workspace cache
+.alire/
+
+# Python tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

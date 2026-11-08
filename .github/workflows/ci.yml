@@ -1,0 +1,131 @@
+name: Spike CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: spike-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-hygiene:
+    name: Repository hygiene and secret detection
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+
+      - name: Install CI scanners
+        run: python -m pip install --disable-pip-version-check --requirement scripts/ci/requirements.txt
+
+      - name: Run repository hygiene checks
+        run: python scripts/ci/run.py hygiene
+
+      - name: Scan for secrets
+        run: python scripts/ci/run.py secrets
+
+  ada-validation:
+    name: Ada build, tests, and SPARK proof
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+
+      - name: Install Alire, GNAT, and GPRbuild
+        uses: alire-project/setup-alire@fc4c8ce471aa30b3af0d39ce15add1ee9eaf28f2
+        with:
+          version: "2.1.1"
+          toolchain: "gnat_native gprbuild"
+          cache: true
+
+      - name: Install GNATprove
+        run: |
+          alr install gnatprove
+          echo "$HOME/.alire/bin" >> "$GITHUB_PATH"
+
+      - name: Compile Ada and run every VM test
+        run: python scripts/ci/run.py ada
+
+      - name: Run SPARK legality, flow analysis, and proofs
+        run: python scripts/ci/run.py prove
+
+  workflow-security:
+    name: Workflow lint and security audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+
+      - name: Set up Go for actionlint
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: "1.26.x"
+
+      - name: Install actionlint
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Lint workflow YAML and enforce workflow policy
+        run: |
+          python -m pip install --disable-pip-version-check --requirement scripts/ci/requirements.txt
+          python scripts/ci/run.py workflow-lint
+
+      - name: Audit GitHub Actions with zizmor
+        uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b
+        with:
+          version: v1.32.0
+          advanced-security: false
+
+  ci-summary:
+    name: CI result summary
+    if: always()
+    needs:
+      - repository-hygiene
+      - ada-validation
+      - workflow-security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+
+      - name: Publish gate summary
+        env:
+          HYGIENE_RESULT: ${{ needs.repository-hygiene.result }}
+          ADA_RESULT: ${{ needs.ada-validation.result }}
+          WORKFLOW_SECURITY_RESULT: ${{ needs.workflow-security.result }}
+        run: python scripts/ci/run.py summary

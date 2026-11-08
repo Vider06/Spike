@@ -10,6 +10,12 @@ project Spike is
 
    package Compiler is
       for Default_Switches ("Ada") use
-        ("-gnat2022", "-gnata", "-gnatf");
+        ("-gnat2022",
+         "-gnata",
+         "-gnatVa",
+         "-gnato",
+         "-gnatwa",
+         "-gnatwe",
+         "-gnatf");
    end Compiler;
 end Spike;
