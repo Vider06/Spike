@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-import sys
 import unittest
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-from run import inspect_text_file, workflow_policy_findings
+from scripts.ci.run import inspect_text_file, workflow_policy_findings
 
 
 class TextHygieneTests(unittest.TestCase):
