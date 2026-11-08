@@ -1,6 +1,6 @@
 # Spike 0.1 memory and machine-state model
 
-**Status:** Bounded byte-memory safety layer implemented; stack and multi-byte operations remain deferred.
+**Status:** Bounded byte memory, atomic little-endian word access, and a memory-backed bounded stack are implemented; formal verification remains in progress.
 
 ## Machine state
 
@@ -14,7 +14,7 @@ A region has a half-open address interval [start, start + length) and explicit r
 
 All reads, writes, and instruction-fetch byte accesses validate the address, require a mapped region, and check the corresponding permission. Failed writes leave storage unchanged. Failed reads return a zero output value and a failure result. Instruction fetch requires execute permission; ordinary reads do not imply execute permission. Multi-byte word accesses use little-endian byte order and require the complete eight-byte range to fit inside one mapped region with the requested permission. Validation occurs before any storage mutation, so failed word writes are atomic.
 
-The initial implementation uses a bounded byte array. It deliberately does not expose host addresses, unchecked conversions, or raw storage references.
+The implementation uses a bounded byte array. It deliberately does not expose host addresses, unchecked conversions, or raw storage references. Word reads and writes use little-endian byte order, require the entire eight-byte range to fit inside one region, and validate permissions before reading or mutating storage.
 
 ## Security invariants
 
@@ -23,8 +23,10 @@ The initial implementation uses a bounded byte array. It deliberately does not e
 - Write-and-execute mappings are rejected (W^X).
 - Every access checks bounds, mapping, and permission before touching storage.
 - Memory operations return explicit result values rather than relying on host faults or exceptions for expected invalid accesses.
-- Byte access is independent of host endianness; multi-byte accessors must define byte order and atomic failure behavior before being added.
+- Byte access is independent of host endianness; multi-byte words have explicit little-endian encoding and all-or-nothing writes.
+- The stack pointer is architectural machine state; stack bounds are separate, explicit, and checked on every push/pop.
+- Stack operations update SP only after the corresponding memory access succeeds.
 
 ## Deferred
 
-A virtual stack, stack pointer, load/store widths, multi-byte atomic accesses, dynamic allocation, paging, concurrency, and system services remain deferred. Each requires explicit architectural semantics and dedicated boundary/fault tests before implementation.
+Dynamic allocation, paging, concurrency, and system services remain deferred. Call/return integration and final instruction-address semantics remain open VM work.
