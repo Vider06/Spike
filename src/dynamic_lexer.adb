@@ -155,6 +155,9 @@ package body Dynamic_Lexer is
       Best   : Candidate;
       Tied   : Boolean;
    begin
+      if Source'Length > 16 * 1_024 * 1_024 then
+         raise Lexical_Error with "source exceeds the 16 MiB lexer input limit";
+      end if;
       while Offset < Source'Length loop
          declare
             At : constant Positive := Source'First + Offset;
