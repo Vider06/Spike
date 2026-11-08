@@ -19,6 +19,7 @@ procedure Fuzz_Dynamic_Lexer is
      Lexer_Config.Load ("config/lexer/tokens.json");
 begin
    for Round in 1 .. 2_000 loop
+      pragma Unreferenced (Round);
       declare
          Source_Length : constant Natural := Next_Byte mod 97;
          Source : String (1 .. Source_Length);
