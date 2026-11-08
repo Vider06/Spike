@@ -8,21 +8,12 @@ Completed through the initial language specification and architecture baseline. 
 
 ## Phase 1 — Normative executable core
 
-Define the first executable instruction subset and the machine-state contract.
-
-Deliverables:
-- Sixteen 64-bit general-purpose virtual registers, a 64-bit instruction-index PC, four explicit status flags, and execution state.
-- Deterministic reset state and instruction-step contract.
-- Normative semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT.
-- Positive, negative, boundary, aliasing, and state-transition test vectors.
-
-**Exit:** every instruction in the subset has complete operands, state effects, flag behavior, and test vectors.
+The initial register state and semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT are normative in [ISA 0.1](isa/ISA-0.1.md) and [ADR 0009](architecture/adr/0009-initial-executable-subset.md).
 
 ## Phase 2 — VM state and safety substrate
 
-Implement the machine-state types and invariant-preserving operations in Ada 2022, using SPARK for bounded deterministic logic.
+Implemented in the VM-only work branch:
 
-Deliverables:
 - Sixteen virtual registers, PC, flags, execution status, and structured terminal fault state.
 - Deterministic initialization and reset.
 - Finite virtual byte memory with an explicitly bounded region table.
@@ -30,13 +21,13 @@ Deliverables:
 - W^X enforcement and checked byte reads, writes, and instruction fetches.
 - Tests for region boundaries, overlap, unmapped addresses, permission failures, and fault-state invariants.
 
-**Exit:** state and memory packages compile; unit tests pass; GNATprove results document exactly which contracts and checks are proved.
+The code and proof status still require compiler and GNATprove execution before this phase can be declared verified.
 
 ## Phase 3 — VM semantic operations
 
-Implement the virtual instruction semantics and atomic state transitions. Keep these independent of source parsing and host execution.
+The VM operation package implements MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT directly against machine state. It does not parse source, decode instruction bytes, or run a program loop.
 
-**Exit:** the normative instruction vectors pass without a parser, interpreter loop, or native backend.
+Remaining work in this phase is verification: compile the packages, execute the test mains, run GNATprove, and address any diagnostics.
 
 ## Phase 4 — Frontend and Quick Engine (not part of the current VM-only work)
 
