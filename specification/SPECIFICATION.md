@@ -1,9 +1,9 @@
 # Spike Language Specification
 
-**Specification version:** 0.1-draft  
-**Status:** Initial design baseline  
-**Project:** Spike  
-**Repository:** https://github.com/Vider06/Spike
+- **Specification version:** 0.1-draft
+- **Status:** Initial design baseline
+- **Project:** Spike
+- **Repository:** https://github.com/Vider06/Spike
 
 ---
 
