@@ -29,14 +29,14 @@ GNATprove analyzes the three SPARK implementation units with full legality/flow/
 
 ## Run locally
 
-Install GNAT, GPRbuild, GNATprove, Python 3.12+, Go, actionlint, yamllint, and detect-secrets. Then run:
+Install Alire, GNAT, GPRbuild, GNATprove, Python 3.12+, Go, actionlint, yamllint, and detect-secrets. Make the GNAT toolchain available to commands through Alire's execution environment, and add Alire's binary installation directory to PATH. Then run:
 
 ```sh
 python -m pip install -r scripts/ci/requirements.txt
 python scripts/ci/run.py hygiene
 python scripts/ci/run.py secrets
-python scripts/ci/run.py ada
-python scripts/ci/run.py prove
+alr exec -- python scripts/ci/run.py ada
+alr exec -- python scripts/ci/run.py prove
 python scripts/ci/run.py workflow-lint
 ```
 
