@@ -23,7 +23,8 @@ package Token_Stream is
    Invalid_Stream  : exception;
 
    --  Create validates token spans, lexeme lengths, kinds, and ordering.
-   function Create (Items : Token_Vectors.Vector) return Stream;
+   function Create
+     (Items : Token_Vectors.Vector; Source_Length : Natural) return Stream;
    function Position (Items : Stream) return Natural;
    function Remaining (Items : Stream) return Natural;
    function Peek (Items : Stream; Distance : Natural := 0) return Token;
