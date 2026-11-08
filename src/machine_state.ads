@@ -26,6 +26,8 @@ is
      with Global => null;
    function Program_Counter (State : Machine_State) return Word
      with Global => null;
+   function Stack_Pointer (State : Machine_State) return Word
+     with Global => null;
    function Get_Flags (State : Machine_State) return Status_Flags
      with Global => null;
    function Current_Status (State : Machine_State) return Execution_Status
@@ -38,6 +40,7 @@ is
        Global => null,
        Post =>
          Program_Counter (Initial_State'Result) = 0
+         and then Stack_Pointer (Initial_State'Result) = 0
          and then Current_Status (Initial_State'Result) = Running
          and then Last_Fault (Initial_State'Result) = No_Fault
          and then Get_Flags (Initial_State'Result) =
@@ -51,6 +54,7 @@ is
        Global => null,
        Post =>
          Program_Counter (State) = 0
+         and then Stack_Pointer (State) = 0
          and then Current_Status (State) = Running
          and then Last_Fault (State) = No_Fault
          and then Get_Flags (State) =
@@ -81,6 +85,17 @@ is
          and then Get_Flags (State) = Get_Flags (State'Old)
          and then Current_Status (State) = Current_Status (State'Old)
          and then Last_Fault (State) = Last_Fault (State'Old);
+
+   procedure Set_Stack_Pointer
+     (State : in out Machine_State; Value : Word)
+     with
+       Global => null,
+       Pre => Current_Status (State) = Running,
+       Post =>
+         Stack_Pointer (State) = Value
+         and then Program_Counter (State) = Program_Counter (State'Old)
+         and then Get_Flags (State) = Get_Flags (State'Old)
+         and then Current_Status (State) = Current_Status (State'Old);
 
    procedure Set_Flags
      (State : in out Machine_State; Value : Status_Flags)
@@ -123,6 +138,7 @@ private
    type Machine_State is record
       Registers : Register_File := [others => 0];
       PC : Word := 0;
+      SP : Word := 0;
       Flags : Status_Flags := (Z => False, N => False, C => False, V => False);
       Status : Execution_Status := Running;
       Fault : Fault_Kind := No_Fault;
@@ -134,6 +150,9 @@ private
 
    function Program_Counter (State : Machine_State) return Word
    is (State.PC);
+
+   function Stack_Pointer (State : Machine_State) return Word
+   is (State.SP);
 
    function Get_Flags (State : Machine_State) return Status_Flags
    is (State.Flags);
