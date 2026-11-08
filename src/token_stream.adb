@@ -3,7 +3,27 @@ with Lexer_Properties;
 
 package body Token_Stream is
    function Create (Items : Token_Vectors.Vector) return Stream is
+      Previous_End : Natural := 0;
+      First_Item   : Boolean := True;
    begin
+      for Item of Items loop
+         if Length (Item.Kind) = 0 or else Length (Item.Lexeme) = 0 then
+            raise Invalid_Stream with "tokens require non-empty kind and lexeme";
+         end if;
+         if not Lexer_Properties.Valid_Token_Span
+           (Item.Start_Offset, Item.End_Offset, Natural (Length (Item.Lexeme)))
+         then
+            raise Invalid_Stream with "token span does not match its lexeme length";
+         end if;
+         if not First_Item
+           and then not Lexer_Properties.Spans_Are_Ordered
+             (Previous_End, Item.Start_Offset)
+         then
+            raise Invalid_Stream with "token spans overlap or are out of order";
+         end if;
+         Previous_End := Item.End_Offset;
+         First_Item := False;
+      end loop;
       return (Items => Items, Cursor => 0);
    end Create;
 
@@ -11,18 +31,26 @@ package body Token_Stream is
 
    function Remaining (Items : Stream) return Natural is
    begin
+      if not Lexer_Properties.Cursor_In_Bounds
+        (Items.Cursor, Natural (Items.Items.Length))
+      then
+         raise Invalid_Stream with "token stream cursor invariant violated";
+      end if;
       return Natural (Items.Items.Length) - Items.Cursor;
    end Remaining;
 
    function Peek (Items : Stream; Distance : Natural := 0) return Token is
+      Count : constant Natural := Natural (Items.Items.Length);
    begin
-      if Distance >= Natural'Last - Items.Cursor then
+      if not Lexer_Properties.Cursor_In_Bounds (Items.Cursor, Count)
+        or else Distance >= Natural'Last - Items.Cursor
+      then
          raise End_Of_Stream;
       end if;
       declare
          Index : constant Natural := Items.Cursor + Distance + 1;
       begin
-         if Index > Natural (Items.Items.Length) then
+         if Index > Count then
             raise End_Of_Stream;
          end if;
          return Items.Items (Positive (Index));
@@ -30,10 +58,10 @@ package body Token_Stream is
    end Peek;
 
    procedure Consume (Items : in out Stream; Value : out Token) is
+      Count : constant Natural := Natural (Items.Items.Length);
    begin
       Value := Peek (Items);
-      Lexer_Properties.Advance_Cursor
-        (Items.Cursor, Natural (Items.Items.Length));
+      Lexer_Properties.Advance_Cursor (Items.Cursor, Count);
    end Consume;
 
    procedure Expect
