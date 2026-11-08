@@ -6,6 +6,7 @@ is
    is
    begin
       Offset := Offset + Amount;
+      pragma Assert (Offset <= Source_Length);
    end Advance_Offset;
 
    procedure Advance_Cursor (Cursor : in out Natural; Token_Count : Natural) is
