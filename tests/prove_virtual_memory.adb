@@ -29,7 +29,5 @@ begin
       Fetch_Byte (State, 64, Value, Result);
    end if;
 
-   if Value = 16#A5# then
-      null;
-   end if;
+   Write_Byte (State, 0, Value, Result);
 end Prove_Virtual_Memory;
