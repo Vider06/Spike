@@ -63,6 +63,18 @@ begin
    pragma Assert
      (Get_Flags (State) = (Z => True, N => True, C => True, V => True));
 
+   --  Branch conditions inspect flags without modifying them.
+   Set_Flags (State, (Z => True, N => False, C => True, V => False));
+   Set_Program_Counter (State, 10);
+   Branch (State, Zero_Set, 20);
+   pragma Assert (Program_Counter (State) = 20);
+   Branch (State, Carry_Clear, 30);
+   pragma Assert (Program_Counter (State) = 20);
+   Branch (State, Always, 40);
+   pragma Assert (Program_Counter (State) = 40);
+   pragma Assert
+     (Get_Flags (State) = (Z => True, N => False, C => True, V => False));
+
    VM_Instructions.Halt (State);
    pragma Assert (Current_Status (State) = Halted);
 end Test_VM_Instructions;
