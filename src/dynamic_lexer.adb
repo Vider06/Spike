@@ -249,7 +249,7 @@ package body Dynamic_Lexer is
                then
                   Matcher_Rule.Available := True;
                   Matcher_Rule.Definition := Def;
-               elsif Def.Priority = Entry.Definition.Priority then
+               elsif Def.Priority = Matcher_Rule.Definition.Priority then
                   raise Lexical_Error with
                     "ambiguous generic matcher definitions: "
                     & To_String (Def.Name);
