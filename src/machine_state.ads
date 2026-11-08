@@ -121,7 +121,7 @@ is
 private
    type Register_File is array (Register_Index) of Word;
    type Machine_State is record
-      Registers : Register_File := (others => 0);
+      Registers : Register_File := [others => 0];
       PC : Word := 0;
       Flags : Status_Flags := (Z => False, N => False, C => False, V => False);
       Status : Execution_Status := Running;
