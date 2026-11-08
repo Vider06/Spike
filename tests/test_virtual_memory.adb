@@ -9,6 +9,7 @@ procedure Test_Virtual_Memory is
    State : Memory;
    Result : Memory_Result;
    Value : Byte;
+   Value_Word : Word;
 begin
    Initialize (State);
 
@@ -62,4 +63,11 @@ begin
    Map_Region (State, 240, 32,
      (Read => True, Write => False, Execute => False), Result);
    pragma Assert (Result = Invalid_Range);
+
+   --  A complete word is read/written in little-endian order.
+   Write_Word (State, 70, 16#0123_4567_89AB_CDEF#, Result);
+   pragma Assert (Result = Success);
+   Read_Word (State, 70, Value_Word, Result);
+   pragma Assert (Result = Success);
+   pragma Assert (Value_Word = 16#0123_4567_89AB_CDEF#);
 end Test_Virtual_Memory;
