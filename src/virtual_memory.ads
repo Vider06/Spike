@@ -16,8 +16,8 @@ is
    end record;
 
    type Memory_Result is
-     (Success, Invalid_Range, Region_Overlap, Unmapped_Address,
-      Permission_Denied, Write_Execute_Violation);
+     (Success, Invalid_Range, Region_Overlap, Region_Table_Full,
+      Unmapped_Address, Permission_Denied, Write_Execute_Violation);
 
    type Memory is private;
 
@@ -28,25 +28,25 @@ is
      with Global => null;
 
    procedure Map_Region
-     (State       : in out Memory;
-      Start       : Address;
-      Length      : Address;
-      Access      : Permissions;
-      Result      : out Memory_Result)
+     (State          : in out Memory;
+      Start          : Address;
+      Length         : Address;
+      Rights         : Permissions;
+      Result         : out Memory_Result)
      with Global => null, Pre => Length > 0;
 
    procedure Read_Byte
-     (State : Memory; At : Address; Value : out Byte;
+     (State : Memory; Address_Value : Address; Value : out Byte;
       Result : out Memory_Result)
      with Global => null;
 
    procedure Write_Byte
-     (State : in out Memory; At : Address; Value : Byte;
+     (State : in out Memory; Address_Value : Address; Value : Byte;
       Result : out Memory_Result)
      with Global => null;
 
    procedure Fetch_Byte
-     (State : Memory; At : Address; Value : out Byte;
+     (State : Memory; Address_Value : Address; Value : out Byte;
       Result : out Memory_Result)
      with Global => null;
 
@@ -54,9 +54,10 @@ private
    subtype Region_Index is Positive range 1 .. Max_Regions;
 
    type Region is record
-      Start  : Address := 0;
-      Length : Address := 0;
-      Access : Permissions := (Read => False, Write => False, Execute => False);
+      Start   : Address := 0;
+      Length  : Address := 0;
+      Rights  : Permissions :=
+        (Read => False, Write => False, Execute => False);
    end record;
 
    type Region_Array is array (Region_Index) of Region;
@@ -66,7 +67,7 @@ private
       Storage : Storage_Array := (others => 0);
       Regions : Region_Array := (others =>
         (Start => 0, Length => 0,
-         Access => (Read => False, Write => False, Execute => False)));
+         Rights => (Read => False, Write => False, Execute => False)));
       Count : Natural range 0 .. Max_Regions := 0;
    end record;
 end Virtual_Memory;
