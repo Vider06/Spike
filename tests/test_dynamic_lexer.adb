@@ -1,4 +1,6 @@
 with Ada.Assertions; use Ada.Assertions;
+with Ada.Strings;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 with Lexer_Config;
@@ -247,6 +249,64 @@ begin
          when Dynamic_Lexer.Lexical_Error => Invalid := True;
       end;
       Assert (Invalid, "unterminated quoted strings are rejected");
+   end;
+
+   declare
+      Document : Unbounded_String :=
+        To_Unbounded_String ("{""schema_version"":""1.0"",""tokens"":[");
+   begin
+      for I in 0 .. 675 loop
+         declare
+            First_Byte : constant Character :=
+              Character'Val (Character'Pos ('A') + I / 26);
+            Second_Byte : constant Character :=
+              Character'Val (Character'Pos ('A') + I mod 26);
+            Token_Name : constant String :=
+              "TOKEN_" & Ada.Strings.Fixed.Trim (Natural'Image (I), Ada.Strings.Left);
+            Token_Value : constant String := First_Byte & Second_Byte & "x";
+         begin
+            if I > 0 then
+               Append (Document, ",");
+            end if;
+            Append
+              (Document,
+               "{""name"":""" & Token_Name
+               & """,""matcher"":""literal"",""value"":"""
+               & Token_Value & """}");
+         end;
+      end loop;
+      Append
+        (Document,
+         ",{""name"":""SPACE"",""matcher"":""whitespace"",""emit"":false}]}");
+      declare
+         Large_Config : constant Lexer_Config.Lexer_Configuration :=
+           Lexer_Config.Validate (To_String (Document));
+         Large_Stream : Token_Stream.Stream :=
+           Dynamic_Lexer.Tokenize (Large_Config, "ZZx");
+      begin
+         Token_Stream.Expect (Large_Stream, "TOKEN_675", Item);
+         Assert (Token_Stream.Remaining (Large_Stream) = 0,
+                 "large JSON rule sets use the compiled prefix index");
+      end;
+   end;
+
+   declare
+      Invalid : Boolean := False;
+   begin
+      begin
+         declare
+            Bad : constant Lexer_Config.Lexer_Configuration :=
+              Lexer_Config.Validate
+                ("{""schema_version"":""1.0"",""tokens"":["
+                 & "{""name"":""IDENT_A"",""matcher"":""identifier""},"
+                 & "{""name"":""IDENT_B"",""matcher"":""identifier""}]}");
+         begin
+            pragma Unreferenced (Bad);
+         end;
+      exception
+         when Lexer_Config.Config_Error => Invalid := True;
+      end;
+      Assert (Invalid, "equal-priority identical generic matchers are ambiguous");
    end;
 
    Put_Line ("Dynamic lexer tests passed");
