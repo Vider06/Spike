@@ -70,7 +70,7 @@ jobs:
       - name: Run SPARK legality, flow analysis, and proofs
         run: alr exec -- python scripts/ci/run.py prove
 
-      - name: Archive SPARK proof report and statistics
+      - name: Archive VM build, test, and SPARK diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
