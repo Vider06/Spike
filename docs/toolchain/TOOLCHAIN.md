@@ -2,43 +2,53 @@
 
 ## Pipeline
 
-    Source -> Lexer -> Parser -> Syntax representation
-           -> Semantic validation -> Validated virtual instructions
-                |                              |
-                v                              v
-            Quick Engine                 x86-64 backend
-                |                              |
-            VM result                      Lowering
-                                               |
-                                         Register allocation
-                                               |
-                                            Encoder
-                                               |
-                                          ELF writer
-                                               |
-                                      External system linker
+```text
+Source
+  -> Frontend/Lexer
+  -> Token Stream
+  -> Frontend/Parser
+  -> Semantic validation
+  -> Frontend IR
+       |                              |
+       v                              v
+  Backend/Quick                  Backend/Build
+  Interpreter                   Assembler
+       |                              |
+      VM                         Target encoder
+       |                              |
+  Quick result                 Object writer
+                                      |
+                                  Linker
+                                      |
+                                Native artifact
+```
 
-An internal IR is an implementation choice. It must preserve source spans, typed operands, selected profile, and instruction effects.
+The frontend IR is the only program representation shared by both backends. It preserves source spans, typed operands, labels, selected profile, and instruction effects. It contains no host register allocation or target byte encoding.
 
-## Components
+## Component ownership
 
-| Component | Responsibility |
-|---|---|
-| Lexer | Tokens, literals, comments, source spans |
-| Parser | Grammar and syntax tree |
-| Validator | Operand forms, symbols, directives, profile checks |
-| ISA model | Instruction definitions and semantic effects |
-| Quick Engine | Execute validated virtual instructions |
-| Native backend | Lower virtual instructions to x86-64 |
-| Encoder | Emit exact native instruction bytes |
-| Object writer | Sections, symbols, relocations, ELF metadata |
-| CLI | Commands, options, diagnostics, exit codes |
+| Area | Responsibility | Current status |
+|---|---|---|
+| `frontend/lexer` | JSON-configured tokens, source spans, token stream | Implemented |
+| `frontend/parser` | Grammar and structured syntax | Planned |
+| `frontend/ir` | Validated target-independent instructions | Planned |
+| `backend/quick/interpreter` | Execute validated IR | Planned |
+| `backend/quick/vm` | Registers, memory, stack, virtual semantics | VM primitives implemented |
+| `backend/build/assembler` | Resolve assembly constructs and labels | Planned |
+| `backend/build/encoder` | Emit target instruction bytes | Planned |
+| `backend/build/object` | Sections, symbols, relocations, object metadata | Planned |
+| `backend/build/linker` | Final link orchestration | Planned |
+| `leng` | Machine-readable language and token definitions | Manifest and lexer definitions implemented |
 
-## Ada/SPARK direction
+## Language data
 
-Ada/SPARK remains a proposed implementation technology, not a language requirement. Put bounded deterministic core logic in SPARK where practical; use Ada for filesystem, process, and platform integration. Do not claim whole-toolchain formal verification merely because some units use SPARK. Record proof scope, assumptions, unproved checks, and trusted dependencies.
+Machine-readable definitions belong under `src/leng/`. The root `language.json` manifest indexes domain files and schemas. The Ada lexer loads the token table; it must not contain parallel hardcoded keyword or operator spelling tables. New matcher algorithms are implemented in the engine and declared in the schema, while ordinary token additions remain JSON-only.
 
-Candidate packages include Lexer, Parser, Syntax, Validation, ISA, Machine_State, Quick, Backend.X86_64, Encoding.X86_64, Object.ELF, Diagnostics, and CLI. These are organizational suggestions, not committed APIs.
+Normative prose, rationale, and architectural decisions remain in the specification and ADR documents. JSON should represent structured data, not duplicate prose contracts.
+
+## Ada and SPARK
+
+Ada 2022 is the implementation language. Bounded deterministic state transitions, range checks, predicates, and invariants should use SPARK when they can be expressed with tractable contracts. JSON parsing, filesystem/process integration, and dynamic dispatch may remain ordinary Ada. Do not claim whole-toolchain formal verification merely because some units use SPARK; always report the exact proof boundary and results.
 
 ## Error handling
 

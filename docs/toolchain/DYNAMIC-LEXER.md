@@ -1,7 +1,7 @@
 # Dynamic Lexer
 
-Spike's lexer is implemented natively in Ada 2022. The JSON file
-`config/lexer/tokens.json` is the source of truth for token definitions.
+Spike's lexer is implemented natively in Ada 2022 under `src/frontend/lexer/`. The JSON file
+`src/leng/lexer/tokens.json` is the source of truth for token definitions.
 Adding a keyword, operator, delimiter, comment prefix, or token name is a
 configuration change: it does not require a lexer source-code change.
 
@@ -78,7 +78,7 @@ operations are Ada runtime components and are not claimed as SPARK-proved.
 The ASCII character classes, identifier predicates, maximal-munch ordering,
 source-span validity, span ordering, bounded source-offset advancement, and
 token cursor advancement are specified in `Lexer_Properties` with contracts.
-The lexer and token stream call these contracted helpers at their boundaries.
+The lexer and token stream call these contracted helpers at their boundaries. The manifest `src/leng/language.json` indexes the token data and its schema.
 GNATprove checks the SPARK package and its proof harness in CI. Passing those
 proofs establishes only those stated properties; it does not formally verify
 the complete dynamic lexer, JSON parser, or vector-backed stream.

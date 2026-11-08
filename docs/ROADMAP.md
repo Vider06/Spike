@@ -1,55 +1,60 @@
-# Spike 0.1 roadmap
+# Spike implementation roadmap
 
-**Status:** Ordered implementation plan
+**Status:** Ordered implementation plan. Component status is reflected in the repository tree and the checks that actually run.
 
-## Phase 0 — Architecture foundation
+## Phase 0 — Language and architecture foundation
 
-Completed through the initial language specification and architecture baseline. The project identity, custom syntax direction, virtual-ISA model, and x86-family target direction are established.
+The project identity, custom source syntax direction, virtual-ISA model, and x86-64 first native target are established in the [language specification](../specification/SPECIFICATION.md), [architecture overview](architecture/OVERVIEW.md), and architecture decision records.
 
-## Phase 1 — Normative executable core
+## Phase 1 — Virtual machine foundation
 
-The initial register state and semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT are normative in [ISA 0.1](isa/ISA-0.1.md) and [ADR 0009](architecture/adr/0009-initial-executable-subset.md).
-
-## Phase 2 — VM state and safety substrate
-
-Implemented in the VM-only work branch:
+Implemented VM primitives include:
 
 - Sixteen virtual registers, PC, SP, flags, execution status, and structured terminal fault state.
 - Deterministic initialization and reset.
-- Finite virtual byte memory with an explicitly bounded region table.
-- Non-overlapping mapped regions with read, write, and execute permissions.
-- W^X enforcement and checked byte reads, writes, and instruction fetches.
-- Checked little-endian 64-bit reads/writes with whole-range validation and atomic failure.
-- A bounded memory-backed stack with overflow/underflow checks and permission enforcement.
-- Tests for region boundaries, overlap, unmapped addresses, permission failures, stack bounds, and fault-state invariants.
+- Finite virtual byte memory with bounded region tracking and non-overlapping mappings.
+- Independent read, write, and execute permissions with W^X enforcement.
+- Checked byte and little-endian word access.
+- Bounded memory-backed stack with overflow/underflow checks.
+- Virtual instruction semantics and explicit control-flow primitives.
 
-The code and proof status still require compiler and GNATprove execution before this phase can be declared verified.
+The VM packages live under `src/backend/quick/vm/`.
 
-## Phase 3 — VM semantic operations
+## Phase 2 — Dynamic lexical frontend
 
-The VM operation package implements MOV, ADD, SUB, AND, OR, XOR, NOT, flag-driven conditional branches, unconditional branches, and HALT directly against machine state. It does not parse source, decode instruction bytes, or run a program loop.
+Implemented:
 
-Remaining work in this phase is verification: compile the packages, execute the test mains, run GNATprove, and address any diagnostics.
+- JSON-owned token definitions and schema under `src/leng/lexer/`.
+- A manifest at `src/leng/language.json`.
+- Ada lexer configuration validation and indexed maximal-munch matching.
+- Validated token streams with bounded cursor and source-span invariants.
+- Deterministic regression fuzzing and tests.
+- SPARK contracts for the bounded properties that can be isolated and proved.
 
-## Phase 4 — Frontend and Quick Engine (not part of the current VM-only work)
+The lexer is under `src/frontend/lexer/`. Adding token spellings or names is data-driven; adding a new matcher primitive requires an engine/schema change.
 
-Implement lexer, parser, semantic validation, validated instruction records, and the Quick interpreter only in a later, separately scoped change.
+## Phase 3 — Parser and validated IR
 
-## Phase 5 — Memory and control-flow extensions
+Next:
 
-Multi-byte word access, bounded stack behavior, flag-driven branches, and stack-backed CALL/RETURN are implemented as VM APIs. The remaining VM work is memory-operation integration with machine state, final fault propagation policy, and any additional primitive required by the interpreter-host contract. Each feature requires normative semantics and tests before implementation.
+- Parse token streams using the language grammar.
+- Produce structured diagnostics with source spans.
+- Validate operands, symbols, labels, directives, and instruction forms.
+- Define a stable target-independent IR consumed by both execution backends.
 
-## Phase 6 — x86-64 backend
+Boundaries are reserved under `src/frontend/parser/` and `src/frontend/ir/`.
 
-Lower validated virtual instructions to x86-64 while preserving virtual state and flag semantics. Add encoding tests, branch fixups, and differential tests.
+## Phase 4 — Quick interpreter
 
-## Phase 7 — Object output and hosted execution
+Implement the Quick interpreter over validated IR. It should dispatch virtual instructions through the VM packages and preserve the specified VM fault model. No parsing or source syntax handling belongs in this backend.
 
-Add ELF64 relocatable output for the declared hosted Linux x86-64 profile, symbols, relocations, and external linker integration.
+## Phase 5 — Native Build backend
 
-## Phase 8 — Conformance and 0.1 stabilization
+Implement the build assembler, target encoder, object writer, and linker integration under `src/backend/build/`. Add exact encoding, relocation, and object-format tests. The native backend must preserve the same virtual semantics as Quick.
 
-Deliver conformance fixtures, differential/property tests, fuzzing, scoped SPARK proof reports, examples, user documentation, and an accurate feature matrix.
+## Phase 6 — Conformance and stabilization
+
+Deliver end-to-end examples, language conformance fixtures, differential Quick/Native tests, property-based testing, long-running fuzzing where useful, scoped SPARK reports, installation instructions, and an accurate feature matrix.
 
 ## Deferred
 
@@ -57,4 +62,4 @@ Additional native architectures, PE/COFF, Mach-O, a custom linker, vector/floati
 
 ## Change control
 
-If implementation exposes a flaw in a normative decision, update the ADR and specification before relying on changed behavior. Implementation convenience must never silently become language semantics.
+If implementation exposes a flaw in a normative decision, update the relevant ADR and specification before relying on changed behavior. Implementation convenience must never silently become language semantics.

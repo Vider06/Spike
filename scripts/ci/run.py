@@ -31,11 +31,20 @@ REQUIRED_FILES = (
     ".github/dependabot.yml",
     "alire.toml",
     "scripts/ci/requirements.txt",
+    "src/README.md",
     "src/frontend/lexer/dynamic_lexer.adb",
+    "src/frontend/parser/README.md",
+    "src/frontend/ir/README.md",
+    "src/backend/quick/interpreter/README.md",
+    "src/backend/build/assembler/README.md",
+    "src/leng/README.md",
     "src/leng/language.json",
     "src/leng/language.schema.json",
     "src/leng/lexer/tokens.json",
     "src/leng/lexer/tokens.schema.json",
+    "tests/frontend/lexer/test_dynamic_lexer.adb",
+    "tests/frontend/lexer/fuzz_dynamic_lexer.adb",
+    "tests/proofs/frontend/prove_lexer_properties.adb",
     "tests/proofs/vm/prove_virtual_memory.adb",
     "tests/proofs/vm/prove_vm_stack.adb",
 )
@@ -151,7 +160,7 @@ def inspect_text_file(relative_path: str, content: bytes) -> list[str]:
 def workflow_policy_findings(content: str, relative_path: str) -> list[str]:
     """Enforce least privilege, pinned actions, and bounded CI execution."""
     findings: list[str] = []
-    workflow_header = content.split("\\njobs:", 1)[0]
+    workflow_header = content.split("\njobs:", 1)[0]
     header_lines = workflow_header.splitlines()
     trigger_index = next(
         (index for index, line in enumerate(header_lines) if line == "on:"), None
@@ -167,7 +176,7 @@ def workflow_policy_findings(content: str, relative_path: str) -> list[str]:
                 trigger_events.append(line.strip()[:-1])
     if trigger_events != ["push"]:
         findings.append(f"{relative_path}: CI must have exactly one trigger: push")
-    if not re.search(r"(?m)^permissions:\\s*\\{\\}\\s*$", content):
+    if not re.search(r"(?m)^permissions:\s*\{\}\s*$", content):
         findings.append(f"{relative_path}: workflow-level permissions must default to empty")
     if re.search(r"(?m)^\s*(pull_request_target|workflow_run):", content):
         findings.append(f"{relative_path}: privileged trigger is not allowed in this CI workflow")
