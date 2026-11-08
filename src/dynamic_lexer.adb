@@ -1,4 +1,6 @@
+with Ada.Containers;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+use type Ada.Containers.Count_Type;
 with GNATCOLL.JSON;
 with Lexer_Properties;
 use type GNATCOLL.JSON.JSON_Value_Type;
@@ -151,8 +153,12 @@ package body Dynamic_Lexer is
                      then
                         return Result;
                      end if;
-                     Result.Value :=
-                       To_Unbounded_String (GNATCOLL.JSON.Get (Parsed.Value));
+                     declare
+                        Decoded_Text : constant String :=
+                          GNATCOLL.JSON.Get (Parsed.Value);
+                     begin
+                        Result.Value := To_Unbounded_String (Decoded_Text);
+                     end;
                      Result.Length := Last - Source_Position + 1;
                      Result.Lexeme :=
                        To_Unbounded_String (Source (Source_Position .. Last));
@@ -186,8 +192,8 @@ package body Dynamic_Lexer is
       Tied   : Boolean;
 
       Single_Literals : Single_Character_Buckets;
-      Prefix_Head : Prefix_Heads := (others => 0);
-      Prefix_Next : Prefix_Links := (others => 0);
+      Prefix_Head : Prefix_Heads := [others => 0];
+      Prefix_Next : Prefix_Links := [others => 0];
       Prefix_Rules : Definition_Vectors.Vector;
       Generic_Definitions : Generic_Matchers;
 
