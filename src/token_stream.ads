@@ -18,9 +18,11 @@ package Token_Stream is
      (Index_Type => Positive, Element_Type => Token);
 
    type Stream is private;
-   End_Of_Stream : exception;
+   End_Of_Stream   : exception;
    Unexpected_Token : exception;
+   Invalid_Stream  : exception;
 
+   --  Create validates token spans, lexeme lengths, kinds, and ordering.
    function Create (Items : Token_Vectors.Vector) return Stream;
    function Position (Items : Stream) return Natural;
    function Remaining (Items : Stream) return Natural;
