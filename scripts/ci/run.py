@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -285,12 +286,13 @@ def run_ada() -> None:
         execute(f"Run {test_name}", [str(executable)], log_name=f"{test_name}.log")
 
 
-def _proof_report_metrics(log_text: str) -> dict[str, object]:
+def _proof_report_metrics(log_text: str, project_report_text: str = "") -> dict[str, object]:
     """Extract only statistics explicitly present in GNATprove/time output."""
+    combined_text = log_text + "\n" + project_report_text
     prover_names = sorted(
         {
             match.group(0)
-            for match in re.finditer(r"\b(?:Alt-Ergo|CVC5|Z3)\b", log_text, re.IGNORECASE)
+            for match in re.finditer(r"\b(?:Alt-Ergo|CVC5|Z3|Trivial)\b", combined_text, re.IGNORECASE)
         },
         key=str.casefold,
     )
@@ -298,7 +300,7 @@ def _proof_report_metrics(log_text: str) -> dict[str, object]:
         {
             unit
             for unit in SPARK_UNITS
-            if re.search(rf"(?<![\w-]){re.escape(unit)}(?![\w-])", log_text, re.IGNORECASE)
+            if re.search(rf"(?<![\w-]){re.escape(unit)}(?![\w-])", combined_text, re.IGNORECASE)
         }
     )
 
@@ -310,11 +312,11 @@ def _proof_report_metrics(log_text: str) -> dict[str, object]:
         return None
 
     maximum_rss = re.search(
-        r"Maximum resident set size \(kbytes\):\s*(\d+)", log_text, re.IGNORECASE
+        r"Maximum resident set size \(kbytes\):\s*(\d+)", combined_text, re.IGNORECASE
     )
     summary_lines = [
         line.strip()
-        for line in log_text.splitlines()
+        for line in combined_text.splitlines()
         if re.search(
             r"statistics|checks? proved|checks? not proved|checks? unproved|"
             r"timed? out|timeout|proof attempts|prover|verification condition",
@@ -322,14 +324,36 @@ def _proof_report_metrics(log_text: str) -> dict[str, object]:
             re.IGNORECASE,
         )
     ]
+    total_row = re.search(r"(?m)^\s*Total\s+(.+)$", project_report_text)
+    summary_cells: list[str] = []
+    if total_row:
+        summary_cells = [
+            cell
+            for cell in total_row.group(1).split()
+            if not cell.startswith("(")
+        ]
+
+    def cell_count(index: int) -> int | None:
+        if index >= len(summary_cells) or summary_cells[index] == ".":
+            return None
+        token = summary_cells[index].replace(",", "")
+        return int(token) if token.isdigit() else None
+
+    flow_count = cell_count(1)
+    interval_count = cell_count(2)
+    prover_count = cell_count(3)
+    proved_parts = [value for value in (flow_count, interval_count, prover_count) if value is not None]
+    unproved_count = cell_count(5)
     return {
         "provers_detected": prover_names,
         "requested_units": list(SPARK_UNITS),
         "units_mentioned_in_output": observed_units,
-        "checks_proved": reported_count(
+        "checks_total": cell_count(0),
+        "checks_proved": sum(proved_parts) if summary_cells else reported_count(
             (r"(\d[\d,]*)\s+checks?\s+proved", r"proved\s+checks?:\s*(\d[\d,]*)")
         ),
-        "checks_not_proved": reported_count(
+        "checks_justified": cell_count(4),
+        "checks_not_proved": unproved_count if summary_cells else reported_count(
             (
                 r"(\d[\d,]*)\s+checks?\s+(?:not proved|unproved)",
                 r"(?:not proved|unproved)\s+checks?:\s*(\d[\d,]*)",
@@ -338,8 +362,10 @@ def _proof_report_metrics(log_text: str) -> dict[str, object]:
         "timeouts_reported": reported_count(
             (r"(\d[\d,]*)\s+(?:proof\s+)?timeouts?", r"timeouts?:\s*(\d[\d,]*)")
         ),
+        "max_steps_used": reported_count((r"max steps used for successful proof:\s*(\d[\d,]*)",)),
         "maximum_rss_kib": int(maximum_rss.group(1)) if maximum_rss else None,
         "gnatprove_report_excerpt": summary_lines[-80:],
+        "project_summary_table": project_report_text.splitlines()[:55],
     }
 
 
@@ -400,7 +426,7 @@ def run_proofs() -> None:
         "--timeout=10",
         "--checks-as-errors=on",
         "--warnings=error",
-        "--report=all",
+        "--report=statistics",
         "--output-header",
         "-u",
         *SPARK_UNITS,
@@ -428,7 +454,15 @@ def run_proofs() -> None:
 
     elapsed = time.monotonic() - started
     log_text = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
-    metrics = _proof_report_metrics(log_text)
+    project_report_path = ROOT / "build" / "obj" / "gnatprove" / "gnatprove.out"
+    project_report_text = (
+        project_report_path.read_text(encoding="utf-8", errors="replace")
+        if project_report_path.is_file()
+        else ""
+    )
+    if project_report_text:
+        shutil.copyfile(project_report_path, LOG_DIR / "gnatprove-summary.out")
+    metrics = _proof_report_metrics(log_text, project_report_text)
     report: dict[str, object] = {
         "schema_version": 1,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
