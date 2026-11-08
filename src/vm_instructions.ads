@@ -10,6 +10,15 @@ is
 
    Sign_Mask : constant Machine_State.Word := 16#8000_0000_0000_0000#;
 
+   type Branch_Condition is
+     (Always, Zero_Set, Zero_Clear, Negative_Set, Negative_Clear,
+      Carry_Set, Carry_Clear, Overflow_Set, Overflow_Clear);
+
+   function Condition_Holds
+     (Flags : Machine_State.Status_Flags; Condition : Branch_Condition)
+      return Boolean
+     with Global => null;
+
    procedure Mov
      (State : in out Machine_State.Machine_State;
       Destination : Register_Index;
@@ -165,6 +174,22 @@ is
           Post =>
             Machine_State.Get_Register (State, Destination) =
               not Machine_State.Get_Register (State'Old, Source)
+            and then Machine_State.Get_Flags (State) =
+              Machine_State.Get_Flags (State'Old)
+            and then Machine_State.Current_Status (State) =
+              Machine_State.Current_Status (State'Old);
+
+   procedure Branch
+     (State : in out Machine_State.Machine_State;
+      Condition : Branch_Condition;
+      Target : Machine_State.Word)
+     with Global => null,
+          Pre => Machine_State.Current_Status (State) = Machine_State.Running,
+          Post =>
+            Machine_State.Program_Counter (State) =
+              (if Condition_Holds (Machine_State.Get_Flags (State'Old), Condition)
+               then Target
+               else Machine_State.Program_Counter (State'Old))
             and then Machine_State.Get_Flags (State) =
               Machine_State.Get_Flags (State'Old)
             and then Machine_State.Current_Status (State) =
