@@ -4,15 +4,61 @@ package VM_Instructions
   with SPARK_Mode => On
 is
    subtype Register_Index is Machine_State.Register_Index;
-   use type Machine_State.Word;
+   subtype Word is Machine_State.Word;
+   use type Word;
    use type Machine_State.Status_Flags;
    use type Machine_State.Execution_Status;
 
-   Sign_Mask : constant Machine_State.Word := 16#8000_0000_0000_0000#;
+   Sign_Mask : constant Word := 16#8000_0000_0000_0000#;
 
    type Branch_Condition is
      (Always, Zero_Set, Zero_Clear, Negative_Set, Negative_Clear,
       Carry_Set, Carry_Clear, Overflow_Set, Overflow_Clear);
+
+   --  Pure semantic functions make the VM contract independently reusable.
+   --  They describe virtual 64-bit behavior, not source-language syntax.
+   function Add_Value (Left, Right : Word) return Word
+     with Global => null,
+          Post => Add_Value'Result = Left + Right;
+
+   function Subtract_Value (Left, Right : Word) return Word
+     with Global => null,
+          Post => Subtract_Value'Result = Left - Right;
+
+   function Logical_Flags (Value : Word) return Machine_State.Status_Flags
+     with Global => null,
+          Post =>
+            Logical_Flags'Result =
+              (Z => Value = 0,
+               N => (Value and Sign_Mask) /= 0,
+               C => False,
+               V => False);
+
+   function Add_Flags (Left, Right : Word)
+     return Machine_State.Status_Flags
+     with Global => null,
+          Post =>
+            Add_Flags'Result =
+              (Z => Add_Value (Left, Right) = 0,
+               N => (Add_Value (Left, Right) and Sign_Mask) /= 0,
+               C => Add_Value (Left, Right) < Left,
+               V =>
+                 ((not (Left xor Right))
+                  and (Left xor Add_Value (Left, Right))
+                  and Sign_Mask) /= 0);
+
+   function Subtract_Flags (Left, Right : Word)
+     return Machine_State.Status_Flags
+     with Global => null,
+          Post =>
+            Subtract_Flags'Result =
+              (Z => Subtract_Value (Left, Right) = 0,
+               N => (Subtract_Value (Left, Right) and Sign_Mask) /= 0,
+               C => Left < Right,
+               V =>
+                 ((Left xor Right)
+                  and (Left xor Subtract_Value (Left, Right))
+                  and Sign_Mask) /= 0);
 
    function Condition_Holds
      (Flags : Machine_State.Status_Flags; Condition : Branch_Condition)
@@ -42,28 +88,13 @@ is
           Pre => Machine_State.Current_Status (State) = Machine_State.Running,
           Post =>
             Machine_State.Get_Register (State, Destination) =
-              Machine_State.Get_Register (State'Old, Left) +
-              Machine_State.Get_Register (State'Old, Right)
+              Add_Value
+                (Machine_State.Get_Register (State'Old, Left),
+                 Machine_State.Get_Register (State'Old, Right))
             and then Machine_State.Get_Flags (State) =
-              (Z =>
-                 Machine_State.Get_Register (State'Old, Left) +
-                 Machine_State.Get_Register (State'Old, Right) = 0,
-               N =>
-                 ((Machine_State.Get_Register (State'Old, Left) +
-                   Machine_State.Get_Register (State'Old, Right)) and Sign_Mask) /= 0,
-               C =>
-                 Machine_State.Get_Register (State'Old, Left) +
-                 Machine_State.Get_Register (State'Old, Right) <
-                   Machine_State.Get_Register (State'Old, Left),
-               V =>
-                 ((not
-                     (Machine_State.Get_Register (State'Old, Left) xor
-                      Machine_State.Get_Register (State'Old, Right)))
-                  and
-                    (Machine_State.Get_Register (State'Old, Left) xor
-                     (Machine_State.Get_Register (State'Old, Left) +
-                      Machine_State.Get_Register (State'Old, Right)))
-                  and Sign_Mask) /= 0)
+              Add_Flags
+                (Machine_State.Get_Register (State'Old, Left),
+                 Machine_State.Get_Register (State'Old, Right))
             and then Machine_State.Current_Status (State) =
               Machine_State.Current_Status (State'Old);
 
@@ -76,26 +107,13 @@ is
           Pre => Machine_State.Current_Status (State) = Machine_State.Running,
           Post =>
             Machine_State.Get_Register (State, Destination) =
-              Machine_State.Get_Register (State'Old, Left) -
-              Machine_State.Get_Register (State'Old, Right)
+              Subtract_Value
+                (Machine_State.Get_Register (State'Old, Left),
+                 Machine_State.Get_Register (State'Old, Right))
             and then Machine_State.Get_Flags (State) =
-              (Z =>
-                 Machine_State.Get_Register (State'Old, Left) -
-                 Machine_State.Get_Register (State'Old, Right) = 0,
-               N =>
-                 ((Machine_State.Get_Register (State'Old, Left) -
-                   Machine_State.Get_Register (State'Old, Right)) and Sign_Mask) /= 0,
-               C =>
-                 Machine_State.Get_Register (State'Old, Left) <
-                   Machine_State.Get_Register (State'Old, Right),
-               V =>
-                 ((Machine_State.Get_Register (State'Old, Left) xor
-                   Machine_State.Get_Register (State'Old, Right))
-                  and
-                    (Machine_State.Get_Register (State'Old, Left) xor
-                     (Machine_State.Get_Register (State'Old, Left) -
-                      Machine_State.Get_Register (State'Old, Right)))
-                  and Sign_Mask) /= 0)
+              Subtract_Flags
+                (Machine_State.Get_Register (State'Old, Left),
+                 Machine_State.Get_Register (State'Old, Right))
             and then Machine_State.Current_Status (State) =
               Machine_State.Current_Status (State'Old);
 
@@ -111,13 +129,9 @@ is
               (Machine_State.Get_Register (State'Old, Left) and
                Machine_State.Get_Register (State'Old, Right))
             and then Machine_State.Get_Flags (State) =
-              (Z =>
-                 (Machine_State.Get_Register (State'Old, Left) and
-                  Machine_State.Get_Register (State'Old, Right)) = 0,
-               N =>
-                 ((Machine_State.Get_Register (State'Old, Left) and
-                   Machine_State.Get_Register (State'Old, Right)) and Sign_Mask) /= 0,
-               C => False, V => False)
+              Logical_Flags
+                (Machine_State.Get_Register (State'Old, Left) and
+                 Machine_State.Get_Register (State'Old, Right))
             and then Machine_State.Current_Status (State) =
               Machine_State.Current_Status (State'Old);
 
@@ -133,13 +147,9 @@ is
               (Machine_State.Get_Register (State'Old, Left) or
                Machine_State.Get_Register (State'Old, Right))
             and then Machine_State.Get_Flags (State) =
-              (Z =>
-                 (Machine_State.Get_Register (State'Old, Left) or
-                  Machine_State.Get_Register (State'Old, Right)) = 0,
-               N =>
-                 ((Machine_State.Get_Register (State'Old, Left) or
-                   Machine_State.Get_Register (State'Old, Right)) and Sign_Mask) /= 0,
-               C => False, V => False)
+              Logical_Flags
+                (Machine_State.Get_Register (State'Old, Left) or
+                 Machine_State.Get_Register (State'Old, Right))
             and then Machine_State.Current_Status (State) =
               Machine_State.Current_Status (State'Old);
 
@@ -155,13 +165,9 @@ is
               (Machine_State.Get_Register (State'Old, Left) xor
                Machine_State.Get_Register (State'Old, Right))
             and then Machine_State.Get_Flags (State) =
-              (Z =>
-                 (Machine_State.Get_Register (State'Old, Left) xor
-                  Machine_State.Get_Register (State'Old, Right)) = 0,
-               N =>
-                 ((Machine_State.Get_Register (State'Old, Left) xor
-                   Machine_State.Get_Register (State'Old, Right)) and Sign_Mask) /= 0,
-               C => False, V => False)
+              Logical_Flags
+                (Machine_State.Get_Register (State'Old, Left) xor
+                 Machine_State.Get_Register (State'Old, Right))
             and then Machine_State.Current_Status (State) =
               Machine_State.Current_Status (State'Old);
 
@@ -182,12 +188,13 @@ is
    procedure Branch
      (State : in out Machine_State.Machine_State;
       Condition : Branch_Condition;
-      Target : Machine_State.Word)
+      Target : Word)
      with Global => null,
           Pre => Machine_State.Current_Status (State) = Machine_State.Running,
           Post =>
             Machine_State.Program_Counter (State) =
-              (if Condition_Holds (Machine_State.Get_Flags (State'Old), Condition)
+              (if Condition_Holds
+                    (Machine_State.Get_Flags (State'Old), Condition)
                then Target
                else Machine_State.Program_Counter (State'Old))
             and then Machine_State.Get_Flags (State) =
