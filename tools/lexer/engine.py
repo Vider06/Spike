@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 
 from .config import LexerConfig, TokenDefinition
@@ -36,7 +37,9 @@ class DynamicLexer:
     def _identifier_continue(char: str) -> bool:
         return char == "_" or char.isalnum()
 
-    def _match(self, source: str, offset: int) -> _Match | None:
+    def _match(
+        self, source: str, offset: int, line: int, column: int
+    ) -> _Match | None:
         candidates: list[_Match] = []
         for definition in self._definitions:
             result = self._match_definition(definition, source, offset)
@@ -44,7 +47,6 @@ class DynamicLexer:
                 candidates.append(result)
         if not candidates:
             return None
-        # Maximal munch first; higher configured priority breaks equal-length ties.
         candidates.sort(
             key=lambda item: (item.length, item.definition.priority),
             reverse=True,
@@ -58,8 +60,8 @@ class DynamicLexer:
             raise LexicalError(
                 "ambiguous token definitions",
                 offset=offset,
-                line=1,
-                column=offset + 1,
+                line=line,
+                column=column,
             )
         return candidates[0]
 
@@ -108,17 +110,8 @@ class DynamicLexer:
                 end += 1
             lexeme = remaining[:end]
         elif matcher == "line_comment":
-            marker = next(
-                (
-                    item.value
-                    for item in self._definitions
-                    if item.matcher == "literal" and item.name == definition.name
-                ),
-                None,
-            )
-            # Comment introducers are represented by a dedicated literal token
-            # definition and the comment matcher uses its name as the marker.
-            if marker is None or not remaining.startswith(marker):
+            assert definition.value is not None
+            if not remaining.startswith(definition.value):
                 return None
             end = len(remaining)
             newline = remaining.find("\n")
@@ -140,7 +133,6 @@ class DynamicLexer:
                     end += 1
                     raw = remaining[:end]
                     try:
-                        import json
                         value = json.loads(raw)
                     except ValueError:
                         return None
@@ -158,7 +150,7 @@ class DynamicLexer:
         line = 1
         column = 1
         while offset < len(source):
-            match = self._match(source, offset)
+            match = self._match(source, offset, line, column)
             if match is None:
                 raise LexicalError(
                     f"unrecognized character {source[offset]!r}",

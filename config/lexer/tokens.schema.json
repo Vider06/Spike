@@ -25,7 +25,25 @@
           "value": {"type": "string", "minLength": 1},
           "priority": {"type": "integer"},
           "emit": {"type": "boolean", "default": true}
-        }
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"matcher": {"const": "literal"}}},
+            "then": {"required": ["value"]}
+          },
+          {
+            "if": {"properties": {"matcher": {"const": "line_comment"}}},
+            "then": {"required": ["value"]}
+          },
+          {
+            "if": {
+              "properties": {
+                "matcher": {"enum": ["identifier", "decimal_integer", "hex_integer", "binary_integer", "quoted_string", "whitespace"]}
+              }
+            },
+            "then": {"not": {"required": ["value"]}}
+          }
+        ]
       }
     }
   }

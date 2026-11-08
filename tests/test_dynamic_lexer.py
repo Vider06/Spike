@@ -1,10 +1,9 @@
 """Tests for JSON validation, dynamic lexing, and token-stream behavior."""
 
-import json
 import unittest
 from pathlib import Path
 
-from tools.lexer import DynamicLexer, LexicalError, TokenStream, load_config, validate_config
+from tools.lexer import DynamicLexer, LexicalError, load_config, validate_config
 from tools.lexer.config import ConfigError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +31,18 @@ class LexerConfigTests(unittest.TestCase):
                 "schema_version": "1.0",
                 "tokens": [{"name": "BAD", "matcher": "python"}],
             })
+
+    def test_comment_marker_is_configurable(self):
+        config = validate_config({
+            "schema_version": "1.0",
+            "tokens": [
+                {"name": "WORD", "matcher": "identifier"},
+                {"name": "COMMENT", "matcher": "line_comment", "value": "#", "emit": False},
+                {"name": "SPACE", "matcher": "whitespace", "emit": False},
+            ],
+        })
+        stream = DynamicLexer(config).tokenize("word # comment\nnext")
+        self.assertEqual([token.value for token in stream], ["word", "next"])
 
 
 class DynamicLexerTests(unittest.TestCase):

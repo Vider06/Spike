@@ -76,13 +76,13 @@ def validate_config(document: Any) -> LexerConfig:
         if not isinstance(emit, bool):
             raise ConfigError(f"{prefix}.emit must be boolean")
 
-        needs_value = matcher == "literal"
+        needs_value = matcher in {"literal", "line_comment"}
         if needs_value and (not isinstance(value, str) or not value):
-            raise ConfigError(f"{prefix}.value must be a non-empty string for literal")
+            raise ConfigError(
+                f"{prefix}.value must be a non-empty string for {matcher}"
+            )
         if not needs_value and value is not None:
-            raise ConfigError(f"{prefix}.value is only valid for literal matchers")
-        if matcher == "line_comment" and value is not None:
-            raise ConfigError(f"{prefix}.value is not used for line_comment")
+            raise ConfigError(f"{prefix}.value is only valid for literal/line_comment")
         if matcher == "literal":
             key = (value, priority)
             if key in literal_keys:
@@ -90,9 +90,7 @@ def validate_config(document: Any) -> LexerConfig:
                     f"ambiguous literal {value!r} has duplicate priority {priority}"
                 )
             literal_keys.add(key)
-        definitions.append(
-            TokenDefinition(name, matcher, value, priority, emit)
-        )
+        definitions.append(TokenDefinition(name, matcher, value, priority, emit))
 
     if not any(item.emit for item in definitions):
         raise ConfigError("at least one token definition must emit tokens")
