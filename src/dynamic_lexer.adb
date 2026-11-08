@@ -7,21 +7,31 @@ package body Dynamic_Lexer is
    use Lexer_Config;
    use Token_Stream;
 
-   type Character_Buckets is
+   type Single_Character_Buckets is
      array (Character) of Lexer_Config.Definition_Vectors.Vector;
-   type Matcher_Buckets is
-     array (Lexer_Config.Matcher_Kind) of Lexer_Config.Definition_Vectors.Vector;
+   type Prefix_Buckets is
+     array (Natural range 0 .. 65_535)
+       of Lexer_Config.Definition_Vectors.Vector;
+
+   type Generic_Entry is record
+      Available  : Boolean := False;
+      Definition : Token_Definition;
+   end record;
+   type Generic_Matchers is array (Matcher_Kind) of Generic_Entry;
 
    type Candidate is record
-      Found    : Boolean := False;
-      Def      : Token_Definition;
-      Lexeme   : Unbounded_String;
-      Value    : Unbounded_String;
-      Length   : Natural := 0;
+      Found  : Boolean := False;
+      Def    : Token_Definition;
+      Lexeme : Unbounded_String;
+      Value  : Unbounded_String;
+      Length : Natural := 0;
    end record;
 
    function Is_Space (C : Character) return Boolean is
      (C = ' ' or else C = ASCII.HT or else C = ASCII.LF or else C = ASCII.CR);
+
+   function Prefix_Key (First, Second : Character) return Natural is
+     (Character'Pos (First) * 256 + Character'Pos (Second));
 
    function Starts (Source : String; Source_Position : Positive; Pattern : String)
      return Boolean
@@ -55,7 +65,9 @@ package body Dynamic_Lexer is
             declare
                Pattern : constant String := To_String (Def.Value);
             begin
-               if not Starts (Source, Source_Position, Pattern) then return Result; end if;
+               if not Starts (Source, Source_Position, Pattern) then
+                  return Result;
+               end if;
                Last := Source_Position + Pattern'Length - 1;
                if Def.Matcher = Line_Comment then
                   while Last < Source'Last and then Source (Last + 1) /= ASCII.LF loop
@@ -64,25 +76,35 @@ package body Dynamic_Lexer is
                end if;
             end;
          when Identifier =>
-            if not Lexer_Properties.Is_Identifier_Start (Source (Source_Position)) then return Result; end if;
+            if not Lexer_Properties.Is_Identifier_Start (Source (Source_Position)) then
+               return Result;
+            end if;
             Last := Source_Position;
-            while Last < Source'Last and then Lexer_Properties.Is_Identifier_Continue (Source (Last + 1)) loop
+            while Last < Source'Last
+              and then Lexer_Properties.Is_Identifier_Continue (Source (Last + 1))
+            loop
                Last := Last + 1;
             end loop;
          when Decimal_Integer =>
-            if not Lexer_Properties.Is_ASCII_Digit (Source (Source_Position)) then return Result; end if;
+            if not Lexer_Properties.Is_ASCII_Digit (Source (Source_Position)) then
+               return Result;
+            end if;
             Last := Source_Position;
-            while Last < Source'Last and then Lexer_Properties.Is_ASCII_Digit (Source (Last + 1)) loop
+            while Last < Source'Last
+              and then Lexer_Properties.Is_ASCII_Digit (Source (Last + 1))
+            loop
                Last := Last + 1;
             end loop;
          when Hex_Integer | Binary_Integer =>
-            if Source_Position + 2 > Source'Last or else Source (Source_Position) /= '0' then
+            if Source_Position + 2 > Source'Last
+              or else Source (Source_Position) /= '0'
+            then
                return Result;
             end if;
-            if (Def.Matcher = Hex_Integer and then
-                Source (Source_Position + 1) not in 'x' | 'X')
-              or else (Def.Matcher = Binary_Integer and then
-                       Source (Source_Position + 1) not in 'b' | 'B')
+            if (Def.Matcher = Hex_Integer
+                and then Source (Source_Position + 1) not in 'x' | 'X')
+              or else (Def.Matcher = Binary_Integer
+                       and then Source (Source_Position + 1) not in 'b' | 'B')
             then
                return Result;
             end if;
@@ -90,28 +112,36 @@ package body Dynamic_Lexer is
             while Last <= Source'Last loop
                C := Source (Last);
                exit when
-                 (Def.Matcher = Hex_Integer and then
-                    not Lexer_Properties.Is_ASCII_Hex_Digit (C))
+                 (Def.Matcher = Hex_Integer
+                  and then not Lexer_Properties.Is_ASCII_Hex_Digit (C))
                  or else (Def.Matcher = Binary_Integer and then C not in '0' .. '1');
                Last := Last + 1;
             end loop;
             Last := Last - 1;
-            if Last = Source_Position + 1 then return Result; end if;
+            if Last = Source_Position + 1 then
+               return Result;
+            end if;
          when Whitespace =>
-            if not Is_Space (Source (Source_Position)) then return Result; end if;
+            if not Is_Space (Source (Source_Position)) then
+               return Result;
+            end if;
             Last := Source_Position;
             while Last < Source'Last and then Is_Space (Source (Last + 1)) loop
                Last := Last + 1;
             end loop;
          when Quoted_String =>
-            if Source (Source_Position) /= '"' then return Result; end if;
+            if Source (Source_Position) /= '"' then
+               return Result;
+            end if;
             Last := Source_Position + 1;
             while Last <= Source'Last loop
                if Source (Last) = ASCII.LF or else Source (Last) = ASCII.CR then
                   return Result;
                elsif Source (Last) = Character'Val (16#5C#) then
                   Last := Last + 1;
-                  if Last > Source'Last then return Result; end if;
+                  if Last > Source'Last then
+                     return Result;
+                  end if;
                elsif Source (Last) = '"' then
                   declare
                      Parsed : constant GNATCOLL.JSON.Read_Result :=
@@ -122,14 +152,11 @@ package body Dynamic_Lexer is
                      then
                         return Result;
                      end if;
-                     declare
-                        Decoded_Text : constant String :=
-                          GNATCOLL.JSON.Get (Parsed.Value);
-                     begin
-                        Result.Value := To_Unbounded_String (Decoded_Text);
-                     end;
+                     Result.Value :=
+                       To_Unbounded_String (GNATCOLL.JSON.Get (Parsed.Value));
                      Result.Length := Last - Source_Position + 1;
-                     Result.Lexeme := To_Unbounded_String (Source (Source_Position .. Last));
+                     Result.Lexeme :=
+                       To_Unbounded_String (Source (Source_Position .. Last));
                      Result.Def := Def;
                      Result.Found := True;
                      return Result;
@@ -159,16 +186,19 @@ package body Dynamic_Lexer is
       Best   : Candidate;
       Tied   : Boolean;
 
-      Literals_And_Comments : Character_Buckets;
-      Generic_Matchers : Matcher_Buckets;
+      Single_Literals : Single_Character_Buckets;
+      Prefix_Literals : Prefix_Buckets;
+      Generic_Definitions : Generic_Matchers;
 
       procedure Consider (Def : Token_Definition) is
-         Current : constant Candidate := Match (Def, Source, Source'First + Offset);
+         Current : constant Candidate :=
+           Match (Def, Source, Source'First + Offset);
       begin
          if Current.Found then
-            if not Best.Found or else Lexer_Properties.Better_Match
-              (Current.Length, Current.Def.Priority,
-               Best.Length, Best.Def.Priority)
+            if not Best.Found
+              or else Lexer_Properties.Better_Match
+                (Current.Length, Current.Def.Priority,
+                 Best.Length, Best.Def.Priority)
             then
                Best := Current;
                Tied := False;
@@ -179,20 +209,52 @@ package body Dynamic_Lexer is
             end if;
          end if;
       end Consider;
+
+      procedure Consider_Generic (Kind : Matcher_Kind) is
+      begin
+         if Generic_Definitions (Kind).Available then
+            Consider (Generic_Definitions (Kind).Definition);
+         end if;
+      end Consider_Generic;
+
    begin
       if Source'Length > 16 * 1_024 * 1_024 then
          raise Lexical_Error with "source exceeds the 16 MiB lexer input limit";
       end if;
 
+      --  Compile the JSON definitions into dispatch tables once per input.
+      --  Single-byte and two-byte prefix indexes avoid scanning unrelated
+      --  literals; generic matchers collapse to their highest-priority rule.
       for Def of Configuration.Definitions loop
          if Def.Matcher in Literal | Line_Comment then
             declare
                Pattern : constant String := To_String (Def.Value);
             begin
-               Literals_And_Comments (Pattern (Pattern'First)).Append (Def);
+               if Pattern'Length = 0 then
+                  raise Lexical_Error with "empty literal matcher in configuration";
+               elsif Pattern'Length = 1 then
+                  Single_Literals (Pattern (Pattern'First)).Append (Def);
+               else
+                  Prefix_Literals
+                    (Prefix_Key (Pattern (Pattern'First),
+                                 Pattern (Pattern'First + 1))).Append (Def);
+               end if;
             end;
          else
-            Generic_Matchers (Def.Matcher).Append (Def);
+            declare
+               Entry : Generic_Entry renames Generic_Definitions (Def.Matcher);
+            begin
+               if not Entry.Available
+                 or else Def.Priority > Entry.Definition.Priority
+               then
+                  Entry.Available := True;
+                  Entry.Definition := Def;
+               elsif Def.Priority = Entry.Definition.Priority then
+                  raise Lexical_Error with
+                    "ambiguous generic matcher definitions: "
+                    & To_String (Def.Name);
+               end if;
+            end;
          end if;
       end loop;
 
@@ -203,32 +265,29 @@ package body Dynamic_Lexer is
             Best := (others => <>);
             Tied := False;
 
-            for Def of Literals_And_Comments (Source (Source_Position)) loop
+            for Def of Single_Literals (Source (Source_Position)) loop
                Consider (Def);
             end loop;
 
+            if Source_Position < Source'Last then
+               for Def of Prefix_Literals
+                 (Prefix_Key (Source (Source_Position),
+                              Source (Source_Position + 1)))
+               loop
+                  Consider (Def);
+               end loop;
+            end if;
+
             if Lexer_Properties.Is_Identifier_Start (Source (Source_Position)) then
-               for Def of Generic_Matchers (Identifier) loop
-                  Consider (Def);
-               end loop;
+               Consider_Generic (Identifier);
             elsif Lexer_Properties.Is_ASCII_Digit (Source (Source_Position)) then
-               for Def of Generic_Matchers (Decimal_Integer) loop
-                  Consider (Def);
-               end loop;
-               for Def of Generic_Matchers (Hex_Integer) loop
-                  Consider (Def);
-               end loop;
-               for Def of Generic_Matchers (Binary_Integer) loop
-                  Consider (Def);
-               end loop;
+               Consider_Generic (Decimal_Integer);
+               Consider_Generic (Hex_Integer);
+               Consider_Generic (Binary_Integer);
             elsif Source (Source_Position) = '"' then
-               for Def of Generic_Matchers (Quoted_String) loop
-                  Consider (Def);
-               end loop;
+               Consider_Generic (Quoted_String);
             elsif Is_Space (Source (Source_Position)) then
-               for Def of Generic_Matchers (Whitespace) loop
-                  Consider (Def);
-               end loop;
+               Consider_Generic (Whitespace);
             end if;
 
             if not Best.Found then
