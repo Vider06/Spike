@@ -71,6 +71,7 @@ is
        Post =>
          Get_Register (State, Index) = Value
          and then Program_Counter (State) = Program_Counter (State'Old)
+         and then Stack_Pointer (State) = Stack_Pointer (State'Old)
          and then Get_Flags (State) = Get_Flags (State'Old)
          and then Current_Status (State) = Current_Status (State'Old)
          and then Last_Fault (State) = Last_Fault (State'Old);
@@ -115,6 +116,7 @@ is
        Post =>
          Current_Status (State) = Halted
          and then Program_Counter (State) = Program_Counter (State'Old)
+         and then Stack_Pointer (State) = Stack_Pointer (State'Old)
          and then Get_Flags (State) = Get_Flags (State'Old)
          and then
            (for all Index in Register_Index =>
