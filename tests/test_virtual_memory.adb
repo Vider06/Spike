@@ -2,7 +2,7 @@ with Virtual_Memory;
 
 procedure Test_Virtual_Memory is
    package Test_Memory is new Virtual_Memory
-     (Capacity => 256, Max_Regions => 8);
+     (Capacity => 256, Max_Regions => 2);
    use Test_Memory;
 
    State : Memory;
@@ -30,9 +30,17 @@ begin
      (Read => True, Write => True, Execute => True), Result);
    pragma Assert (Result = Write_Execute_Violation);
 
+   Map_Region (State, 128, 0,
+     (Read => True, Write => False, Execute => False), Result);
+   pragma Assert (Result = Invalid_Range);
+
+   Map_Region (State, 128, 16,
+     (Read => True, Write => False, Execute => False), Result);
+   pragma Assert (Result = Region_Table_Full);
+   pragma Assert (Region_Count (State) = 2);
+
    Write_Byte (State, 4, 16#AA#, Result);
    pragma Assert (Result = Permission_Denied);
-
    Fetch_Byte (State, 4, Value, Result);
    pragma Assert (Result = Success);
    pragma Assert (Value = 0);
