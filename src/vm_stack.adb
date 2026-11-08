@@ -47,6 +47,7 @@ is
          Result := Not_Configured;
       elsif Current < State.Lower
         or else Current > State.Upper
+        or else Current mod 8 /= 0
         or else Current - State.Lower < 8
       then
          Result := Stack_Overflow;
@@ -84,6 +85,7 @@ is
          Result := Not_Configured;
       elsif Current < State.Lower
         or else Current >= State.Upper
+        or else Current mod 8 /= 0
         or else Current > State.Upper - 8
       then
          Result := Stack_Underflow;
@@ -100,6 +102,7 @@ is
          end if;
       end if;
    end Pop;
+
    procedure Call
      (State : Stack;
       CPU : in out Machine_State.Machine_State;
