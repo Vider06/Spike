@@ -74,5 +74,57 @@ begin
       Assert (Invalid, "unknown source bytes must be rejected");
    end;
 
+
+   declare
+      Custom : constant Lexer_Config.Lexer_Configuration :=
+        Lexer_Config.Validate
+          ("{""schema_version"":""1.0"",""tokens"":["
+           & "{""name"":""IDENT"",""matcher"":""identifier""},"
+           & "{""name"":""KEYWORD_IF"",""matcher"":""literal"","
+           & """value"":""if"",""priority"":20},"
+           & "{""name"":""EQUAL"",""matcher"":""literal"",""value"":""==""},"
+           & "{""name"":""ASSIGN"",""matcher"":""literal"",""value"":""=""},"
+           & "{""name"":""COMMENT"",""matcher"":""line_comment"","
+           & """value"":""#"",""emit"":false},"
+           & "{""name"":""SPACE"",""matcher"":""whitespace"",""emit"":false}]}");
+      Dynamic : Token_Stream.Stream :=
+        Dynamic_Lexer.Tokenize (Custom, "if == name # hidden");
+   begin
+      Token_Stream.Expect (Dynamic, "KEYWORD_IF", Item);
+      Token_Stream.Expect (Dynamic, "EQUAL", Item);
+      Token_Stream.Expect (Dynamic, "IDENT", Item);
+      Assert (To_String (Item.Value) = "name",
+              "JSON-configured identifier must be tokenized dynamically");
+      Assert (Token_Stream.Remaining (Dynamic) = 0,
+              "configured comment and whitespace must be skipped");
+   end;
+
+   declare
+      Numbers : Token_Stream.Stream :=
+        Dynamic_Lexer.Tokenize (Config, "0xFF 0b101");
+   begin
+      Token_Stream.Expect (Numbers, "HEX_INTEGER", Item);
+      Assert (To_String (Item.Value) = "0xFF", "hexadecimal literal");
+      Token_Stream.Expect (Numbers, "BINARY_INTEGER", Item);
+      Assert (To_String (Item.Value) = "0b101", "binary literal");
+   end;
+
+   declare
+      Invalid : Boolean := False;
+   begin
+      begin
+         declare
+            Bad : constant Token_Stream.Stream :=
+              Dynamic_Lexer.Tokenize
+                (Config, Character'Val (16#D9#) & Character'Val (16#A1#));
+         begin
+            pragma Unreferenced (Bad);
+         end;
+      exception
+         when Dynamic_Lexer.Lexical_Error => Invalid := True;
+      end;
+      Assert (Invalid, "numeric matchers must accept ASCII digits only");
+   end;
+
    Put_Line ("Dynamic lexer tests passed");
 end Test_Dynamic_Lexer;
