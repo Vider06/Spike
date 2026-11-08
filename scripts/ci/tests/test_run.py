@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import unittest
 
-from scripts.ci.run import inspect_text_file, workflow_policy_findings
+from scripts.ci.run import (
+    _proof_report_metrics,
+    inspect_text_file,
+    workflow_policy_findings,
+)
 
 
 class TextHygieneTests(unittest.TestCase):
@@ -26,6 +30,31 @@ class TextHygieneTests(unittest.TestCase):
     def test_invalid_utf8_is_rejected(self) -> None:
         findings = inspect_text_file("sample.txt", b"\xff")
         self.assertTrue(any("valid UTF-8" in item for item in findings))
+
+
+
+class ProofStatisticsTests(unittest.TestCase):
+    def test_extracts_only_reported_proof_statistics(self) -> None:
+        report = _proof_report_metrics(
+            "GNATprove: 12 checks proved\n"
+            "GNATprove: 2 checks not proved\n"
+            "Prover: Z3\n"
+            "Maximum resident set size (kbytes): 4096\n"
+            "machine_state.adb"
+        )
+        self.assertEqual(report["checks_proved"], 12)
+        self.assertEqual(report["checks_not_proved"], 2)
+        self.assertEqual(report["provers_detected"], ["Z3"])
+        self.assertEqual(report["maximum_rss_kib"], 4096)
+        self.assertIn("machine_state.adb", report["units_mentioned_in_output"])
+
+    def test_unreported_statistics_are_not_fabricated_as_zero(self) -> None:
+        report = _proof_report_metrics("GNATprove completed.")
+        self.assertIsNone(report["checks_proved"])
+        self.assertIsNone(report["checks_not_proved"])
+        self.assertIsNone(report["timeouts_reported"])
+        self.assertIsNone(report["maximum_rss_kib"])
+        self.assertEqual(report["provers_detected"], [])
 
 
 class WorkflowPolicyTests(unittest.TestCase):
