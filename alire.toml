@@ -1,0 +1,7 @@
+name = "spike"
+description = "Spike virtual machine and low-level language project"
+version = "0.1.0-dev"
+project-files = ["spike.gpr"]
+
+[[depends-on]]
+gnatprove = "=16.1.0"

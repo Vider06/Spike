@@ -1,0 +1,1 @@
+"""Spike project automation package."""

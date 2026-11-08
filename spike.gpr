@@ -3,10 +3,22 @@ project Spike is
    for Source_Dirs use ("src", "tests");
    for Object_Dir use "build/obj";
    for Exec_Dir use "build/bin";
-   for Main use ("test_machine_state.adb");
+   for Main use
+     ("test_machine_state.adb",
+      "test_virtual_memory.adb",
+      "test_vm_instructions.adb",
+      "test_vm_stack.adb",
+      "prove_virtual_memory.adb",
+      "prove_vm_stack.adb");
 
    package Compiler is
       for Default_Switches ("Ada") use
-        ("-gnat2022", "-gnata", "-gnatf");
+        ("-gnat2022",
+         "-gnata",
+         "-gnatVa",
+         "-gnato",
+         "-gnatwa",
+         "-gnatwe",
+         "-gnatf");
    end Compiler;
 end Spike;

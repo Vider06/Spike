@@ -5,7 +5,7 @@ Spike is a low-level, assembler-oriented language with a custom source syntax an
 The project has three deliberately separate layers:
 
 1. **Spike language** — source syntax, operands, labels, directives, and instruction semantics.
-2. **Spike virtual machine** — the architectural state and virtual instructions defined by Spike.
+2. **Spike virtual machine** — architectural state, bounded virtual memory, permissions, and virtual instruction behavior.
 3. **Native backend** — a future backend that lowers the same virtual ISA to the selected native target.
 
 ## Project decisions
@@ -17,8 +17,8 @@ The project has three deliberately separate layers:
 | Initial target family | x86; x86-64 is the first native profile |
 | Implementation language | Ada 2022 |
 | Formal-methods subset | SPARK for bounded, deterministic core components where practical |
-| First execution path | Quick interpreter for validated virtual instructions |
-| Later execution path | Native x86-64 backend |
+| First execution path | Quick interpreter for validated virtual instructions (future work) |
+| Later execution path | Native x86-64 backend (future work) |
 
 The virtual ISA defines program behavior. Neither x86-64 nor the host CPU defines Spike instruction semantics.
 
@@ -27,20 +27,27 @@ The virtual ISA defines program behavior. Neither x86-64 nor the host CPU define
 - `spike run program.spike` is the planned Quick-mode interface.
 - `spike build program.spike` is the planned Native-mode interface.
 
-These commands are design targets; the toolchain is not yet implemented.
+These commands are design targets; the toolchain is not yet implemented. This VM-only implementation does not include a source interpreter, parser, frontend, CLI, instruction decoder, or native backend.
 
-## 0.1 implementation sequence
+## VM implementation scope
 
-1. Freeze the minimal virtual-machine state and executable instruction subset.
-2. Implement and verify the machine-state package in Ada/SPARK.
-3. Implement the source frontend and validated instruction representation.
-4. Implement the Quick interpreter against the normative semantics.
-5. Add the x86-64 backend only after the shared semantics are stable.
+The current VM work focuses on architectural semantics and its safety substrate:
 
-The first executable subset is intentionally small: `MOV`, `ADD`, `SUB`, `AND`, `OR`, `XOR`, `NOT`, and `HALT`. The normative details are recorded in [ADR 0009](docs/architecture/adr/0009-initial-executable-subset.md) and [ISA 0.1](docs/isa/ISA-0.1.md).
+- Sixteen independent 64-bit virtual registers, PC, SP, flags, and execution status.
+- Deterministic reset and explicit terminal fault state with a structured fault kind.
+- Virtual semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, flag-driven branches, and HALT.
+- Bounded downward-growing stack with checked PUSH/POP and stack-backed CALL/RETURN primitives.
+- Finite virtual memory with non-overlapping mapped regions.
+- Independent read, write, and execute permissions, including W^X enforcement.
+- Checked byte reads, writes, and instruction-fetch access.
+- Atomic little-endian 64-bit word reads and writes, with whole-region range validation.
+- Tests for arithmetic boundaries, flag behavior, operand aliasing, memory boundaries, and permission failures.
+
+The instruction package implements semantic operations only. It does not fetch/decode a program, parse source text, or run an interpreter loop. The VM APIs provide byte/word memory access, a bounded stack, conditional branches, and stack-backed call/return. They are VM primitives only: no source-level instruction encoding, parser, decoder, or interpreter loop is included. Source-level LOAD/STORE forms and host services remain deferred.
 
 ## Documentation
 
+- [Continuous integration and verification gates](docs/CI.md)
 - [Language specification](specification/SPECIFICATION.md)
 - [Architecture overview](docs/architecture/OVERVIEW.md)
 - [Architecture decision records](docs/architecture/adr/README.md)
@@ -53,10 +60,6 @@ The first executable subset is intentionally small: `MOV`, `ADD`, `SUB`, `AND`, 
 - [Toolchain architecture](docs/toolchain/TOOLCHAIN.md)
 - [Conformance and testing](docs/testing/CONFORMANCE-AND-TESTING.md)
 - [Roadmap](docs/ROADMAP.md)
-
-## Scope boundary
-
-The first implementation does not include memory instructions, a virtual stack, calls/returns, OS services, privileged execution, boot protocols, kernel integration, dynamic linking, or a stable external ABI. Those features require explicit specifications before implementation.
 
 > What you write is what the machine is asked to execute.
 

@@ -8,51 +8,46 @@ Completed through the initial language specification and architecture baseline. 
 
 ## Phase 1 — Normative executable core
 
-Define the first executable instruction subset and the machine-state contract.
+The initial register state and semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT are normative in [ISA 0.1](isa/ISA-0.1.md) and [ADR 0009](architecture/adr/0009-initial-executable-subset.md).
 
-Deliverables:
-- Sixteen 64-bit general-purpose virtual registers, a 64-bit instruction-index PC, four explicit status flags, and execution state.
-- Deterministic reset state and instruction-step contract.
-- Normative semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT.
-- Positive, negative, boundary, aliasing, and state-transition test vectors.
-- Explicit exclusion of memory, stack, calls, branches, and host services from this first subset.
+## Phase 2 — VM state and safety substrate
 
-**Exit:** every instruction in the subset has complete operands, state effects, flag behavior, and test vectors.
+Implemented in the VM-only work branch:
 
-## Phase 2 — Virtual machine state implementation
+- Sixteen virtual registers, PC, SP, flags, execution status, and structured terminal fault state.
+- Deterministic initialization and reset.
+- Finite virtual byte memory with an explicitly bounded region table.
+- Non-overlapping mapped regions with read, write, and execute permissions.
+- W^X enforcement and checked byte reads, writes, and instruction fetches.
+- Checked little-endian 64-bit reads/writes with whole-range validation and atomic failure.
+- A bounded memory-backed stack with overflow/underflow checks and permission enforcement.
+- Tests for region boundaries, overlap, unmapped addresses, permission failures, stack bounds, and fault-state invariants.
 
-Implement the machine-state types and invariant-preserving operations in Ada 2022, using SPARK for the bounded deterministic core.
+The code and proof status still require compiler and GNATprove execution before this phase can be declared verified.
 
-Deliverables:
-- Register and flag types.
-- Machine state and execution-state types.
-- Deterministic initialization.
-- Checked register-index access.
-- Contracts and unit tests for state invariants.
+## Phase 3 — VM semantic operations
 
-**Exit:** the machine-state package compiles, its tests pass, and GNATprove results are recorded for the units actually in SPARK.
+The VM operation package implements MOV, ADD, SUB, AND, OR, XOR, NOT, flag-driven conditional branches, unconditional branches, and HALT directly against machine state. It does not parse source, decode instruction bytes, or run a program loop.
 
-## Phase 3 — Frontend and Quick Engine
+Remaining work in this phase is verification: compile the packages, execute the test mains, run GNATprove, and address any diagnostics.
 
-Implement lexer, parser, semantic validation, validated instruction records, and the Quick interpreter.
+## Phase 4 — Frontend and Quick Engine (not part of the current VM-only work)
 
-**Exit:** the semantic vectors pass in Quick mode; malformed source produces diagnostics rather than uncontrolled termination.
+Implement lexer, parser, semantic validation, validated instruction records, and the Quick interpreter only in a later, separately scoped change.
 
-## Phase 4 — Memory and control-flow extensions
+## Phase 5 — Memory and control-flow extensions
 
-Specify and implement memory regions, loads/stores, faults, branches, stack behavior, and calls in dependency order. Each feature requires normative semantics and tests before implementation.
+Multi-byte word access, bounded stack behavior, flag-driven branches, and stack-backed CALL/RETURN are implemented as VM APIs. The remaining VM work is memory-operation integration with machine state, final fault propagation policy, and any additional primitive required by the interpreter-host contract. Each feature requires normative semantics and tests before implementation.
 
-## Phase 5 — x86-64 backend
+## Phase 6 — x86-64 backend
 
-Lower the validated virtual instructions to x86-64 while preserving virtual state and flag semantics. Add encoding tests, branch fixups, and differential tests.
+Lower validated virtual instructions to x86-64 while preserving virtual state and flag semantics. Add encoding tests, branch fixups, and differential tests.
 
-**Exit:** every claimed native instruction has independent encoding evidence and Quick/Native parity tests.
-
-## Phase 6 — Object output and hosted execution
+## Phase 7 — Object output and hosted execution
 
 Add ELF64 relocatable output for the declared hosted Linux x86-64 profile, symbols, relocations, and external linker integration.
 
-## Phase 7 — Conformance and 0.1 stabilization
+## Phase 8 — Conformance and 0.1 stabilization
 
 Deliver conformance fixtures, differential/property tests, fuzzing, scoped SPARK proof reports, examples, user documentation, and an accurate feature matrix.
 
