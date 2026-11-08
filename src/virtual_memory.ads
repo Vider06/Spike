@@ -28,12 +28,14 @@ is
      with Global => null;
 
    procedure Map_Region
-     (State          : in out Memory;
-      Start          : Address;
-      Length         : Address;
-      Rights         : Permissions;
-      Result         : out Memory_Result)
-     with Global => null, Pre => Length > 0;
+     (State : in out Memory; Start : Address; Length : Address;
+      Rights : Permissions; Result : out Memory_Result)
+     with
+       Global => null,
+       Post =>
+         (if Result = Success
+          then Region_Count (State) = Region_Count (State'Old) + 1
+          else Region_Count (State) = Region_Count (State'Old));
 
    procedure Read_Byte
      (State : Memory; Address_Value : Address; Value : out Byte;
@@ -54,9 +56,9 @@ private
    subtype Region_Index is Positive range 1 .. Max_Regions;
 
    type Region is record
-      Start   : Address := 0;
-      Length  : Address := 0;
-      Rights  : Permissions :=
+      Start : Address := 0;
+      Length : Address := 0;
+      Rights : Permissions :=
         (Read => False, Write => False, Execute => False);
    end record;
 
