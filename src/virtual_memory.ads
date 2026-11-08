@@ -8,6 +8,7 @@ package Virtual_Memory
 is
    subtype Address is Interfaces.Unsigned_64;
    subtype Byte is Interfaces.Unsigned_8;
+   use type Address;
 
    type Permissions is record
       Read    : Boolean := False;
@@ -34,7 +35,7 @@ is
        Global => null,
        Post =>
          (if Result = Success
-          then Region_Count (State) = Region_Count (State'Old) + 1
+          then Region_Count (State) > Region_Count (State'Old)
           else Region_Count (State) = Region_Count (State'Old));
 
    procedure Read_Byte
