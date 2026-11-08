@@ -33,13 +33,12 @@ ADA_TESTS = (
     "test_machine_state",
     "test_virtual_memory",
     "test_vm_instructions",
+    "prove_virtual_memory",
 )
 SPARK_UNITS = (
     "machine_state.adb",
     "vm_instructions.adb",
-    "test_machine_state.adb",
-    "test_virtual_memory.adb",
-    "test_vm_instructions.adb",
+    "prove_virtual_memory.adb",
 )
 
 

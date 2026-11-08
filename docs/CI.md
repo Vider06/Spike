@@ -25,7 +25,7 @@ The build uses Ada 2022, assertions, validity checks, overflow checks, all GNAT 
 - `test_virtual_memory`
 - `test_vm_instructions`
 
-GNATprove analyzes the three SPARK implementation units with full legality/flow/proof mode, proof level 2, warnings-as-errors, and unproved-checks-as-errors. A proof gate cannot pass merely because GNATprove exits successfully without proving its generated checks.
+GNATprove analyzes the machine-state and instruction implementation units plus a concrete SPARK memory proof harness that instantiates the generic memory package. Runtime test mains are compiled and executed separately; they are not treated as formal proof harnesses. The proof gate uses full legality/flow/proof mode, proof level 2, warnings-as-errors, and unproved-checks-as-errors. It cannot pass merely because GNATprove exits successfully without proving its generated checks.
 
 ## Run locally
 

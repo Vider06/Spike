@@ -1,8 +1,6 @@
 with Machine_State;
 
-procedure Test_Machine_State
-  with SPARK_Mode => On
-is
+procedure Test_Machine_State is
    use Machine_State;
    use type Machine_State.Word;
 
