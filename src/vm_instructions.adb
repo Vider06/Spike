@@ -2,9 +2,6 @@ package body VM_Instructions
   with SPARK_Mode => On
 is
    use Machine_State;
-   use type Machine_State.Word;
-
-   Sign_Mask : constant Word := 16#8000_0000_0000_0000#;
 
    function Result_Flags
      (Value : Word; Carry : Boolean := False; Overflow : Boolean := False)
