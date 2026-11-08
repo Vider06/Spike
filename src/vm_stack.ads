@@ -8,6 +8,7 @@ package VM_Stack
 is
    use type Memory_Model.Address;
    use type Machine_State.Execution_Status;
+   use type Machine_State.Word;
 
    type Stack_Result is
      (Success, Not_Configured, Invalid_Bounds, Stack_Overflow,
@@ -31,7 +32,20 @@ is
       Upper : Memory_Model.Address;
       Result : out Stack_Result)
      with Global => null,
-          Pre => Machine_State.Current_Status (CPU) = Machine_State.Running;
+          Pre => Machine_State.Current_Status (CPU) = Machine_State.Running,
+          Post =>
+            Machine_State.Current_Status (CPU) =
+              Machine_State.Current_Status (CPU'Old)
+            and then
+              (if Result = Success
+               then Is_Configured (State)
+                 and then Lower_Bound (State) = Lower
+                 and then Upper_Bound (State) = Upper
+                 and then Machine_State.Stack_Pointer (CPU) =
+                   Machine_State.Word (Upper)
+               else not Is_Configured (State)
+                 and then Machine_State.Stack_Pointer (CPU) =
+                   Machine_State.Stack_Pointer (CPU'Old));
 
    procedure Push
      (State : Stack;
@@ -43,11 +57,19 @@ is
      with Global => null,
           Pre => Machine_State.Current_Status (CPU) = Machine_State.Running,
           Post =>
-            (if Result = Success
-             then Machine_State.Stack_Pointer (CPU) =
-               Machine_State.Stack_Pointer (CPU'Old) - 8
-             else Machine_State.Stack_Pointer (CPU) =
-               Machine_State.Stack_Pointer (CPU'Old));
+            Machine_State.Current_Status (CPU) =
+              Machine_State.Current_Status (CPU'Old)
+            and then Machine_State.Program_Counter (CPU) =
+              Machine_State.Program_Counter (CPU'Old)
+            and then Machine_State.Get_Flags (CPU) =
+              Machine_State.Get_Flags (CPU'Old)
+            and then
+              (if Result = Success
+               then Machine_State.Stack_Pointer (CPU) =
+                 Machine_State.Stack_Pointer (CPU'Old) - 8
+                 and then Memory_Error = Memory_Model.Success
+               else Machine_State.Stack_Pointer (CPU) =
+                 Machine_State.Stack_Pointer (CPU'Old));
 
    procedure Pop
      (State : Stack;
@@ -59,11 +81,20 @@ is
      with Global => null,
           Pre => Machine_State.Current_Status (CPU) = Machine_State.Running,
           Post =>
-            (if Result = Success
-             then Machine_State.Stack_Pointer (CPU) =
-               Machine_State.Stack_Pointer (CPU'Old) + 8
-             else Machine_State.Stack_Pointer (CPU) =
-               Machine_State.Stack_Pointer (CPU'Old));
+            Machine_State.Current_Status (CPU) =
+              Machine_State.Current_Status (CPU'Old)
+            and then Machine_State.Program_Counter (CPU) =
+              Machine_State.Program_Counter (CPU'Old)
+            and then Machine_State.Get_Flags (CPU) =
+              Machine_State.Get_Flags (CPU'Old)
+            and then
+              (if Result = Success
+               then Machine_State.Stack_Pointer (CPU) =
+                 Machine_State.Stack_Pointer (CPU'Old) + 8
+                 and then Memory_Error = Memory_Model.Success
+               else Machine_State.Stack_Pointer (CPU) =
+                 Machine_State.Stack_Pointer (CPU'Old)
+                 and then Value = 0);
 
    procedure Call
      (State : Stack;
@@ -73,7 +104,21 @@ is
       Result : out Stack_Result;
       Memory_Error : out Memory_Model.Memory_Result)
      with Global => null,
-          Pre => Machine_State.Current_Status (CPU) = Machine_State.Running;
+          Pre => Machine_State.Current_Status (CPU) = Machine_State.Running,
+          Post =>
+            Machine_State.Current_Status (CPU) =
+              Machine_State.Current_Status (CPU'Old)
+            and then Machine_State.Get_Flags (CPU) =
+              Machine_State.Get_Flags (CPU'Old)
+            and then
+              (if Result = Success
+               then Machine_State.Program_Counter (CPU) = Target
+                 and then Machine_State.Stack_Pointer (CPU) =
+                   Machine_State.Stack_Pointer (CPU'Old) - 8
+               else Machine_State.Program_Counter (CPU) =
+                   Machine_State.Program_Counter (CPU'Old)
+                 and then Machine_State.Stack_Pointer (CPU) =
+                   Machine_State.Stack_Pointer (CPU'Old));
 
    procedure Return_From_Call
      (State : Stack;
@@ -82,7 +127,20 @@ is
       Result : out Stack_Result;
       Memory_Error : out Memory_Model.Memory_Result)
      with Global => null,
-          Pre => Machine_State.Current_Status (CPU) = Machine_State.Running;
+          Pre => Machine_State.Current_Status (CPU) = Machine_State.Running,
+          Post =>
+            Machine_State.Current_Status (CPU) =
+              Machine_State.Current_Status (CPU'Old)
+            and then Machine_State.Get_Flags (CPU) =
+              Machine_State.Get_Flags (CPU'Old)
+            and then
+              (if Result = Success
+               then Machine_State.Stack_Pointer (CPU) =
+                 Machine_State.Stack_Pointer (CPU'Old) + 8
+               else Machine_State.Program_Counter (CPU) =
+                   Machine_State.Program_Counter (CPU'Old)
+                 and then Machine_State.Stack_Pointer (CPU) =
+                   Machine_State.Stack_Pointer (CPU'Old));
 
 private
    type Stack is record
