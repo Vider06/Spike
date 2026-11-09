@@ -1,10 +1,4 @@
-with Ada.Strings.Unbounded;
-with Dynamic_Lexer;
-with Token_Stream;
-
 package body Spike_API is
-   use Ada.Strings.Unbounded;
-
    function Version return String is (API_Version);
 
    function Load_Lexer_Configuration
