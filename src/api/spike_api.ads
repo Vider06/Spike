@@ -40,7 +40,7 @@ private
      Lexer_Types.Token_Array (1 .. Lexer_Types.Max_Tokens);
 
    type Token_Stream_Handle is record
-      Data    : Token_Buffer := (others => <>);
+      Data    : Token_Buffer := [others => <>];
       Count   : Natural := 0;
       Cursor  : Natural := 0;
       Error   : Lexer_Types.Diagnostic :=

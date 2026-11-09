@@ -1,4 +1,3 @@
-with Lexer_Types;
 with Ada.Strings;
 with Ada.Strings.Fixed;
 

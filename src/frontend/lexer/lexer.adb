@@ -133,7 +133,7 @@ package body Lexer is
       end Validate_Commas;
 
    begin
-      Tokens := (others => <>);
+      Tokens := [others => <>];
       Token_Count := 0;
       Error :=
         (Phase => Lexing,

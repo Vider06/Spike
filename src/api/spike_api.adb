@@ -1,4 +1,3 @@
-with Lexer_Types;
 with Lexer_Properties;
 with Lexer;
 
