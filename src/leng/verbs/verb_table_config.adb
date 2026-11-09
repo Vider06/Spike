@@ -1,6 +1,5 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.JSON;
-with Verb_Table_Types;
 
 package body Verb_Table_Config is
    use GNATCOLL.JSON;
@@ -233,7 +232,11 @@ package body Verb_Table_Config is
                               raise Config_Error with "verb " & To_String (Verb_Name)
                                 & ", flag" & A'Image & ": expected a string";
                            end if;
-                           Flag_Name := To_Unbounded_String (GNATCOLL.JSON.Get (Flag_JSON));
+                           declare
+                              Flag_Text : constant String := GNATCOLL.JSON.Get (Flag_JSON);
+                           begin
+                              Flag_Name := To_Unbounded_String (Flag_Text);
+                           end;
                            Form.Flags (A) := Make_Identifier
                              (To_String (Flag_Name),
                               "verb " & To_String (Verb_Name) & ", flag" & A'Image,
