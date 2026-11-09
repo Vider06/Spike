@@ -11,10 +11,19 @@ package body Parser is
    function Matches (Source : String; Item : Token; Value : Identifier) return Boolean is
       First : Natural;
    begin
-      if Item.Length = 0 or else Item.Length /= Value.Length
-        or else not Lexer_Properties.Valid_Span (Item.Start_Offset, Item.Length, Source'Length)
-      then return False; end if;
-      First := Source'First + Item.Start_Offset;
+      declare
+         Prefix : constant Natural := (if Item.Kind = Flag then 2 else 0);
+         Text_Length : constant Natural :=
+           (if Item.Kind = Flag and then Item.Length >= 2 then Item.Length - 2
+            else Item.Length);
+      begin
+         if Text_Length = 0 or else Text_Length /= Value.Length
+           or else (Item.Kind = Flag and then Item.Length < 2)
+           or else not Lexer_Properties.Valid_Span
+             (Item.Start_Offset, Item.Length, Source'Length)
+         then return False; end if;
+         First := Source'First + Item.Start_Offset + Prefix;
+      end;
       for Offset in 0 .. Item.Length - 1 loop
          if Source (First + Offset) /= Value.Data (Offset + 1) then return False; end if;
       end loop;

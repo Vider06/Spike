@@ -1,5 +1,6 @@
 with Lexer_Properties;
 with Lexer;
+with Parser;
 with Verb_Table_Config;
 
 package body Spike_API is
@@ -23,6 +24,25 @@ package body Spike_API is
          Result.Error);
       return Result;
    end Tokenize_Source;
+
+   function Parse_Source
+     (Source : String; Table : Verb_Table_Types.Verb_Table)
+      return Parser_Types.Parse_Result
+   is
+      Tokens : Token_Buffer := [others => <>];
+      Count : Natural := 0;
+      Lex_Error : Diagnostic_Info;
+      Parsed : Parser_Types.Parse_Result;
+   begin
+      Lexer.Tokenize (Source, Tokens, Count, Lex_Error);
+      if Lex_Error.Code /= No_Error then
+         return
+           (Tree => (Count => 0, Statements => [others => <>]),
+            Error => Lex_Error);
+      end if;
+      Parser.Parse (Source, Tokens, Count, Table, Parsed);
+      return Parsed;
+   end Parse_Source;
 
    function Is_Successful (Stream : Token_Stream_Handle) return Boolean is
      (Stream.Error.Code = No_Error);
