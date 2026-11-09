@@ -2,8 +2,6 @@ with Lexer_Properties;
 
 package body Lexer is
    pragma SPARK_Mode (On);
-   use Lexer_Types;
-
    procedure Tokenize
      (Source      : String;
       Tokens      : out Token_Array;
