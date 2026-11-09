@@ -5,6 +5,7 @@ with Lexer_Types;
 with Spike_API;
 
 procedure Test_Spike_API is
+   use type Lexer_Types.Token_Kind;
    Config : constant Lexer_Config.Lexer_Configuration :=
      Spike_API.Load_Lexer_Configuration ("src/leng/lexer/tokens.json");
    Stream : Spike_API.Token_Stream_Handle :=
