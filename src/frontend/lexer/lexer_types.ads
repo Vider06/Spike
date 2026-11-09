@@ -46,7 +46,11 @@ package Lexer_Types is
       Whitespace_Before_Right_Bracket,
       Invalid_Comma,
       Token_Capacity_Exceeded,
-      Input_Too_Large);
+      Input_Too_Large,
+      Unknown_Verb,
+      No_Matching_Form,
+      Unexpected_Token,
+      AST_Capacity_Exceeded);
 
    type Source_Location is record
       Offset : Natural := 0;
