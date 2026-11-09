@@ -2,48 +2,58 @@
 
 ## Pipeline
 
-    Source -> Lexer -> Parser -> Syntax representation
-           -> Semantic validation -> Validated virtual instructions
-                |                              |
-                v                              v
-            Quick Engine                 x86-64 backend
-                |                              |
-            VM result                      Lowering
-                                               |
-                                         Register allocation
-                                               |
-                                            Encoder
-                                               |
-                                          ELF writer
-                                               |
-                                      External system linker
+```text
+Source
+  -> Frontend/Lexer
+  -> Typed token list
+  -> Frontend/Parser
+  -> Name and type validation
+  -> Frontend IR
+       |                              |
+       v                              v
+  Backend/Quick                  Backend/Build
+  Interpreter                   Assembler
+       |                              |
+      VM                         Target encoder
+       |                              |
+  Quick result                 Object writer
+                                      |
+                                  Linker
+                                      |
+                                Native artifact
+```
 
-An internal IR is an implementation choice. It must preserve source spans, typed operands, selected profile, and instruction effects.
+The frontend IR is the only program representation shared by both backends. It preserves source locations, typed operands, labels, selected profile, and instruction effects. It contains no host register allocation or target byte encoding.
 
-## Components
+## Component ownership
 
-| Component | Responsibility |
-|---|---|
-| Lexer | Tokens, literals, comments, source spans |
-| Parser | Grammar and syntax tree |
-| Validator | Operand forms, symbols, directives, profile checks |
-| ISA model | Instruction definitions and semantic effects |
-| Quick Engine | Execute validated virtual instructions |
-| Native backend | Lower virtual instructions to x86-64 |
-| Encoder | Emit exact native instruction bytes |
-| Object writer | Sections, symbols, relocations, ELF metadata |
-| CLI | Commands, options, diagnostics, exit codes |
+| Area | Responsibility | Current status |
+|---|---|---|
+| `frontend/lexer` | SPARK lexical rules, typed tokens, source spans, structured diagnostics | Phase 1 implementation |
+| `frontend/parser` | Metadata-driven statement parser, repeated operand groups, source spans, ambiguity diagnostics, and AST | Phase 3 implementation; hierarchical part structure awaits the final grammar |
+| `frontend/ir` | Validated target-independent instructions | Planned |
+| `backend/quick/interpreter` | Execute validated IR | Planned |
+| `backend/quick/vm` | Registers, memory, stack, virtual semantics | VM primitives implemented |
+| `backend/build/assembler` | Resolve assembly constructs and labels | Planned |
+| `backend/build/encoder` | Emit target instruction bytes | Planned |
+| `backend/build/object` | Sections, symbols, relocations, object metadata | Planned |
+| `backend/build/linker` | Final link orchestration | Planned |
+| `leng` | Machine-readable language tables and schemas | Reserved for the Phase 2 verb table |
 
-## Ada/SPARK direction
+## Language data boundary
 
-Ada/SPARK remains a proposed implementation technology, not a language requirement. Put bounded deterministic core logic in SPARK where practical; use Ada for filesystem, process, and platform integration. Do not claim whole-toolchain formal verification merely because some units use SPARK. Record proof scope, assumptions, unproved checks, and trusted dependencies.
+The lexer does not load JSON and does not contain a JSON-defined vocabulary. Its output vocabulary is deliberately small: word, quoted text, left/right bracket, comma, equals separator, flag, newline with indentation, and comment.
 
-Candidate packages include Lexer, Parser, Syntax, Validation, ISA, Machine_State, Quick, Backend.X86_64, Encoding.X86_64, Object.ELF, Diagnostics, and CLI. These are organizational suggestions, not committed APIs.
+Phase 2 introduces the verb-definition JSON. Operand-shape groups may declare `repeat: true`, which means a variable-length comma-separated group rather than a fixed operand count. Its file loader and JSON parser remain ordinary Ada, outside SPARK. A validator checks the complete document and emits a normal Ada table. From that validated table onward, parser and semantic-core code use SPARK-compatible types and contracts. The manifest in `src/leng/language.json` remains the index for future language tables.
+
+## Ada and SPARK
+
+Ada 2022 is the implementation language. Bounded deterministic state transitions, range checks, predicates, and invariants should use SPARK when they can be expressed with tractable contracts. JSON parsing, filesystem/process integration, and dynamic dispatch may remain ordinary Ada. Do not claim whole-toolchain formal verification merely because some units use SPARK; always report the exact proof boundary and results.
 
 ## Error handling
 
-Distinguish source errors, unsupported target features, invariant failures, host I/O errors, and runtime VM faults. Expected user errors should produce structured diagnostics, not uncontrolled crashes.
+Every phase uses one diagnostic record: phase, stable code, zero-based byte offset, and one-based line/column. Human-readable formatting is a separate presentation step. Expected user errors are returned as structured diagnostics, not uncontrolled crashes.
 
 ## Reproducibility
 
-Record compiler versions, target profile, object format version, and relevant build options. Reproducibility should be maintained where timestamps and platform metadata permit.
+Every positive/negative lexer rule has explicit tests, and the basic source fixture has a checked-in golden token listing. Later phases add golden syntax-tree, IR, and execution-result files for each program fixture. Compiler versions, target profile, object format version, and relevant build options should be recorded when they become applicable.

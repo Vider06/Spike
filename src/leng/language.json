@@ -1,0 +1,13 @@
+{
+  "format_version": "1.0",
+  "language": {
+    "name": "Spike",
+    "source_extension": ".spike"
+  },
+  "definitions": {
+    "verbs": {
+      "table": "verbs/verbs.json",
+      "schema": "verbs/verbs.schema.json"
+    }
+  }
+}

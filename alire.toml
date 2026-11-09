@@ -5,3 +5,5 @@ project-files = ["spike.gpr"]
 
 [[depends-on]]
 gnatprove = "=16.1.0"
+gnatcoll = "~26.0.0"
+

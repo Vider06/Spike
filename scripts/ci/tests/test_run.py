@@ -93,7 +93,11 @@ class ProofStatisticsTests(unittest.TestCase):
 
 class WorkflowPolicyTests(unittest.TestCase):
     def test_unpinned_action_is_rejected(self) -> None:
-        content = """permissions: {}
+        content = """on:
+  push:
+    branches:
+      - '**'
+permissions: {}
 jobs:
   test:
     permissions:
@@ -106,7 +110,11 @@ jobs:
         self.assertTrue(any("full commit SHA" in item for item in findings))
 
     def test_short_timeout_is_rejected(self) -> None:
-        content = """permissions: {}
+        content = """on:
+  push:
+    branches:
+      - '**'
+permissions: {}
 jobs:
   test:
     permissions:
@@ -116,8 +124,26 @@ jobs:
         findings = workflow_policy_findings(content, ".github/workflows/ci.yml")
         self.assertTrue(any("at least 60" in item for item in findings))
 
+    def test_second_trigger_is_rejected(self) -> None:
+        content = """on:
+  push:
+  pull_request:
+permissions: {}
+jobs:
+  test:
+    permissions:
+      contents: read
+    timeout-minutes: 60
+"""
+        findings = workflow_policy_findings(content, ".github/workflows/ci.yml")
+        self.assertTrue(any("exactly one trigger: push" in item for item in findings))
+
     def test_sha_pinned_workflow_passes_policy(self) -> None:
-        content = """permissions: {}
+        content = """on:
+  push:
+    branches:
+      - '**'
+permissions: {}
 jobs:
   test:
     permissions:

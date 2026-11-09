@@ -1,0 +1,2 @@
+hotel_capacity "8" global ty:int --inmut
+^^ immutable capacity

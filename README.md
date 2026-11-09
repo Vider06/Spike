@@ -2,11 +2,81 @@
 
 Spike is a low-level, assembler-oriented language with a custom source syntax and its own virtual instruction set architecture (virtual ISA).
 
-The project has three deliberately separate layers:
+The central rule is that **the Spike virtual ISA defines program behavior**. Quick execution and native builds are two backends for the same validated program representation; neither host CPU nor target assembly syntax defines Spike semantics.
 
-1. **Spike language** — source syntax, operands, labels, directives, and instruction semantics.
-2. **Spike virtual machine** — architectural state, bounded virtual memory, permissions, and virtual instruction behavior.
-3. **Native backend** — a future backend that lowers the same virtual ISA to the selected native target.
+## Architecture
+
+```text
+Spike source
+    |
+    v
+Frontend
+    Lexer -> Typed Token List -> Parser -> Validation -> IR
+                                                   |
+                         +-------------------------+----------------------+
+                         |                                                |
+                         v                                                v
+                    Backend / Quick                                 Backend / Build
+                    Interpreter                                     Assembler
+                         |                                                |
+                        VM                                      Encoder -> Object -> Link
+                         |                                                |
+                    Quick result                                 Native artifact
+```
+
+- **Frontend** owns source processing and target-independent IR.
+- **Backend / Quick** executes validated IR using the Spike VM.
+- **Backend / Build** turns validated IR into a native artifact.
+- **leng** owns machine-readable language definitions in JSON.
+
+## Current implementation
+
+Implemented now:
+
+- Ada 2022 virtual-machine state, memory, stack, and virtual instruction primitives.
+- SPARK-based lexer with typed tokens, source locations, and structured diagnostics.
+- Deterministic lexer fuzzing, positive/negative rule tests, and golden token fixtures.
+- SPARK contracts and proof harnesses for bounded VM and lexer properties.
+
+Not yet implemented: parser, semantic frontend validation, IR, Quick interpreter loop, native assembler/build pipeline, CLI, Spike Manager, and linker integration. The initial Ada-facing `Spike_API` facade is implemented for the lexer boundary; it is not yet a user-facing command-line interface. The directory structure documents these boundaries without claiming the future components already exist.
+
+## Language definition data
+
+The lexical rules are implemented directly by the bounded SPARK lexer; token recognition is no longer configured by JSON. [`src/leng/language.json`](src/leng/language.json) remains the manifest for machine-readable language tables. Phase 2 will add the JSON verb table and a non-SPARK loader that validates it into an Ada table consumed by the SPARK core.
+
+## Repository layout
+
+```text
+src/
+  api/                  # implemented: stable Ada-facing toolchain facade
+  frontend/
+    lexer/              # implemented: SPARK lexer, typed tokens, diagnostics
+    parser/              # planned parser boundary
+    ir/                  # planned target-independent representation
+  backend/
+    quick/
+      interpreter/       # planned IR execution loop
+      vm/                # implemented VM primitives
+        state/
+        memory/
+        stack/
+        instructions/
+    build/
+      assembler/         # planned assembly/build representation
+      encoder/           # planned target encodings
+      object/            # planned object-file writer
+      linker/            # planned linker integration
+  leng/                  # language JSON manifest and future verb definitions
+tests/
+  api/                  # public API contract tests
+  frontend/lexer/
+  backend/vm/
+  proofs/frontend/
+  proofs/vm/
+scripts/ci/
+```
+
+Ada source paths are mirrored by the test and proof areas. The GPR project file lists the actual Ada source directories explicitly.
 
 ## Project decisions
 
@@ -14,51 +84,24 @@ The project has three deliberately separate layers:
 |---|---|
 | Language identity | Spike owns a virtual ISA |
 | Source syntax | Custom Spike syntax |
-| Initial target family | x86; x86-64 is the first native profile |
+| Initial native target | x86-64 |
 | Implementation language | Ada 2022 |
-| Formal-methods subset | SPARK for bounded, deterministic core components where practical |
-| First execution path | Quick interpreter for validated virtual instructions (future work) |
-| Later execution path | Native x86-64 backend (future work) |
-
-The virtual ISA defines program behavior. Neither x86-64 nor the host CPU defines Spike instruction semantics.
-
-## Execution paths
-
-- `spike run program.spike` is the planned Quick-mode interface.
-- `spike build program.spike` is the planned Native-mode interface.
-
-These commands are design targets; the toolchain is not yet implemented. This VM-only implementation does not include a source interpreter, parser, frontend, CLI, instruction decoder, or native backend.
-
-## VM implementation scope
-
-The current VM work focuses on architectural semantics and its safety substrate:
-
-- Sixteen independent 64-bit virtual registers, PC, SP, flags, and execution status.
-- Deterministic reset and explicit terminal fault state with a structured fault kind.
-- Virtual semantics for MOV, ADD, SUB, AND, OR, XOR, NOT, flag-driven branches, and HALT.
-- Bounded downward-growing stack with checked PUSH/POP and stack-backed CALL/RETURN primitives.
-- Finite virtual memory with non-overlapping mapped regions.
-- Independent read, write, and execute permissions, including W^X enforcement.
-- Checked byte reads, writes, and instruction-fetch access.
-- Atomic little-endian 64-bit word reads and writes, with whole-region range validation.
-- Tests for arithmetic boundaries, flag behavior, operand aliasing, memory boundaries, and permission failures.
-
-The instruction package implements semantic operations only. It does not fetch/decode a program, parse source text, or run an interpreter loop. The VM APIs provide byte/word memory access, a bounded stack, conditional branches, and stack-backed call/return. They are VM primitives only: no source-level instruction encoding, parser, decoder, or interpreter loop is included. Source-level LOAD/STORE forms and host services remain deferred.
+| Formal-methods subset | SPARK for bounded, deterministic components where practical |
+| First execution path | Quick interpreter for validated IR |
+| Later execution path | Native build backend |
 
 ## Documentation
 
-- [Continuous integration and verification gates](docs/CI.md)
 - [Language specification](specification/SPECIFICATION.md)
 - [Architecture overview](docs/architecture/OVERVIEW.md)
+- [Public API boundary](docs/architecture/API.md)
 - [Architecture decision records](docs/architecture/adr/README.md)
 - [Virtual ISA 0.1](docs/isa/ISA-0.1.md)
 - [Custom syntax and grammar draft](docs/language/GRAMMAR-0.1.md)
-- [Quick and Native execution model](docs/architecture/EXECUTION-MODEL.md)
-- [x86-64 backend design](docs/architecture/X86-64-BACKEND.md)
-- [Memory and machine-state model](docs/architecture/MEMORY-MODEL.md)
-- [ABI and system interfaces](docs/architecture/ABI-AND-SYSTEM-INTERFACES.md)
 - [Toolchain architecture](docs/toolchain/TOOLCHAIN.md)
+- [Lexer](docs/toolchain/LEXER.md)
 - [Conformance and testing](docs/testing/CONFORMANCE-AND-TESTING.md)
+- [Continuous integration and verification gates](docs/CI.md)
 - [Roadmap](docs/ROADMAP.md)
 
 > What you write is what the machine is asked to execute.

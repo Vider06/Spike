@@ -1,40 +1,50 @@
-# Spike 0.1 architecture overview
+# Spike architecture overview
 
-## Identity and boundaries
+## Identity
 
-Spike defines its own low-level virtual instruction set architecture. Source code targets the Spike virtual ISA, not x86 mnemonics. The first native backend is planned for x86-64, but x86-64 implements Spike semantics rather than defining them.
+Spike defines its own low-level virtual instruction set architecture. Source programs target the Spike virtual ISA, not x86 mnemonics. The first native backend is x86-64, but x86-64 implements Spike semantics rather than defining them.
 
-The architecture has three layers:
+## Toolchain pipeline
 
-1. Language frontend: source syntax, operands, labels, directives, and diagnostics.
-2. Virtual machine: architectural state and virtual instruction behavior.
-3. Native backend: future lowering, register allocation, encoding, relocations, and host integration.
+```text
+Spike source
+    |
+    v
+Frontend
+    Lexer -> Token Stream -> Parser -> Semantic validation -> IR
+                                                          |
+                               +--------------------------+------------------------+
+                               |                                                   |
+                               v                                                   v
+                         Backend / Quick                                     Backend / Build
+                         Interpreter                                          Assembler
+                               |                                                   |
+                              VM                                          Encoder -> Object
+                               |                                                   |
+                         Quick result                                        Linker -> Native
+```
 
-## Execution pipeline
+The frontend produces target-independent validated IR. Quick and Build consume the same IR; neither backend reparses source text. This is the key separation that keeps execution behavior consistent.
 
-    Spike source
-        |
-    Lexer and parser
-        |
-    Validated virtual instructions
-        |                         |
-    Quick interpreter        Future x86-64 backend
-        |                         |
-    Virtual state             Native code
+## Repository mapping
 
-The initial implementation begins with the virtual-machine state package, before the frontend or either execution engine.
+- `src/frontend/lexer/`: implemented JSON-driven lexer and token stream.
+- `src/frontend/parser/`: planned grammar parser.
+- `src/frontend/ir/`: planned target-independent instruction representation.
+- `src/backend/quick/vm/`: implemented machine state, memory, stack, and instruction primitives.
+- `src/backend/quick/interpreter/`: planned IR execution loop.
+- `src/backend/build/`: planned assembler, encoder, object writer, and linker integration.
+- `src/leng/`: machine-readable language manifest, definitions, and schemas.
 
-## Initial executable machine
+## Virtual machine
 
-The normative initial subset uses sixteen 64-bit GPRs (R0-R15), a 64-bit instruction-index PC, Z/N/C/V flags, and RUNNING/HALTED/FAULTED execution states. The initial instruction subset is MOV, ADD, SUB, AND, OR, XOR, NOT, and HALT. See [ISA 0.1](../isa/ISA-0.1.md) and [ADR 0009](adr/0009-initial-executable-subset.md).
+The initial machine model uses sixteen 64-bit GPRs (R0-R15), a 64-bit instruction-index PC, Z/N/C/V flags, and RUNNING/HALTED/FAULTED execution states. The virtual ISA's normative instruction semantics are documented in [ISA 0.1](../isa/ISA-0.1.md) and the accepted architecture decisions.
 
-The first subset deliberately has no memory, stack, branch, call, or host-service instructions. This keeps the state model bounded and lets the first implementation establish precise, testable invariants.
+The VM packages are execution primitives. They do not parse source, decode a native instruction stream, or run a complete interpreter loop.
 
 ## Implementation technology
 
-The toolchain implementation uses Ada 2022. SPARK is used for bounded deterministic components where practical, with proof claims limited to the units and properties actually analyzed by GNATprove. Filesystem, process, and platform integration may use ordinary Ada.
-
-The implementation language is independent of the Spike source language and does not constrain third-party implementations.
+The implementation uses Ada 2022. SPARK is used for bounded deterministic components where contracts permit. Proof claims must remain limited to units and properties actually analyzed by GNATprove. Filesystem, process, JSON adaptation, and platform integration may use ordinary Ada.
 
 ## Architectural invariants
 
@@ -43,8 +53,5 @@ The implementation language is independent of the Spike source language and does
 - Host registers and flags are implementation resources, not virtual state.
 - Directives are assembly-time constructs, not VM instructions.
 - Unsupported features are rejected explicitly.
+- Frontend code owns parsing; backends consume validated IR only.
 - Implementation convenience must not silently become language semantics.
-
-## Deferred
-
-Memory, stack, calls, branches, system services, privileged profiles, additional native architectures, dynamic linking, floating-point/vector state, concurrency, macros, and self-hosting are deferred until separately specified.

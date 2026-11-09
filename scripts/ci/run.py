@@ -31,14 +31,56 @@ REQUIRED_FILES = (
     ".github/dependabot.yml",
     "alire.toml",
     "scripts/ci/requirements.txt",
-    "tests/prove_virtual_memory.adb",
-    "tests/prove_vm_stack.adb",
+    "src/README.md",
+    "src/api/spike_api.ads",
+    "src/api/spike_api.adb",
+    "tests/api/test_spike_api.adb",
+    "src/frontend/lexer/lexer.ads",
+    "src/frontend/parser/parser.ads",
+    "src/frontend/parser/parser.adb",
+    "src/frontend/parser/parser_types.ads",
+    "docs/toolchain/PARSER-PHASE-3.md",
+    "src/frontend/lexer/lexer.adb",
+    "src/frontend/lexer/lexer_types.ads",
+    "src/frontend/lexer/lexer_properties.ads",
+    "src/frontend/lexer/lexer_properties.adb",
+    "src/frontend/lexer/lexer_diagnostics.ads",
+    "src/frontend/lexer/lexer_diagnostics.adb",
+    "docs/toolchain/LEXER.md",
+    "src/frontend/parser/README.md",
+    "src/frontend/ir/README.md",
+    "src/backend/quick/interpreter/README.md",
+    "src/backend/build/assembler/README.md",
+    "src/leng/README.md",
+    "src/leng/language.json",
+    "src/leng/language.schema.json",
+    "src/leng/verbs/verb_table_types.ads",
+    "src/leng/verbs/verb_table_types.adb",
+    "src/leng/verbs/verb_table_config.ads",
+    "src/leng/verbs/verb_table_config.adb",
+    "src/leng/verbs/verbs.json",
+    "src/leng/verbs/verbs.schema.json",
+    "tests/leng/test_verb_table.adb",
+    "tests/frontend/lexer/test_lexer.adb",
+    "tests/frontend/parser/test_parser.adb",
+    "tests/frontend/lexer/fuzz_lexer.adb",
+    "tests/frontend/lexer/golden/basic.spike",
+    "tests/frontend/lexer/golden/basic.tokens",
+    "tests/proofs/frontend/prove_lexer_properties.adb",
+    "tests/proofs/vm/prove_virtual_memory.adb",
+    "tests/proofs/vm/prove_vm_stack.adb",
 )
 ADA_TESTS = (
+    "test_spike_api",
+    "test_verb_table",
     "test_machine_state",
     "test_virtual_memory",
     "test_vm_instructions",
     "test_vm_stack",
+    "test_lexer",
+    "test_parser",
+    "fuzz_lexer",
+    "prove_lexer_properties",
     "prove_virtual_memory",
     "prove_vm_stack",
 )
@@ -47,6 +89,13 @@ SPARK_UNITS = (
     "vm_instructions.adb",
     "prove_virtual_memory.adb",
     "prove_vm_stack.adb",
+    "lexer_properties.ads",
+    "lexer_properties.adb",
+    "parser_types.ads",
+    "parser.adb",
+    "verb_table_types.ads",
+    "verb_table_types.adb",
+    "prove_lexer_properties.adb",
 )
 
 
@@ -140,6 +189,22 @@ def inspect_text_file(relative_path: str, content: bytes) -> list[str]:
 def workflow_policy_findings(content: str, relative_path: str) -> list[str]:
     """Enforce least privilege, pinned actions, and bounded CI execution."""
     findings: list[str] = []
+    workflow_header = content.split("\njobs:", 1)[0]
+    header_lines = workflow_header.splitlines()
+    trigger_index = next(
+        (index for index, line in enumerate(header_lines) if line == "on:"), None
+    )
+    trigger_events: list[str] = []
+    if trigger_index is not None:
+        for line in header_lines[trigger_index + 1 :]:
+            if not line.strip():
+                continue
+            if not line.startswith(" "):
+                break
+            if len(line) - len(line.lstrip(" ")) == 2 and line.strip().endswith(":"):
+                trigger_events.append(line.strip()[:-1])
+    if trigger_events != ["push"]:
+        findings.append(f"{relative_path}: CI must have exactly one trigger: push")
     if not re.search(r"(?m)^permissions:\s*\{\}\s*$", content):
         findings.append(f"{relative_path}: workflow-level permissions must default to empty")
     if re.search(r"(?m)^\s*(pull_request_target|workflow_run):", content):
@@ -275,7 +340,7 @@ def run_ada() -> None:
     execute("GNAT compiler version", ["gnat", "--version"])
     execute("GPRbuild version", ["gprbuild", "--version"])
     execute(
-        "Compile every VM test and proof-harness target",
+        "Compile every API, VM, language, lexer test and proof-harness target",
         ["gprbuild", "-P", "spike.gpr", "-p", "-f", "-j0"],
         log_name="ada-build.log",
     )
@@ -585,9 +650,15 @@ def write_summary() -> None:
             "- detect-secrets scans repository files for accidental credentials.",
             "- Ada compiler warnings are promoted to errors; SPARK warnings and unproved checks fail CI.",
             "",
-            "## VM scope",
+            "## Public API boundary",
+        "",
+        "- The Ada-facing `Spike_API` package is the supported in-process entry point for the lexer and validated verb-table services.",
+        "- CI compiles and executes the public API contract test; the future manager should depend on this package rather than frontend internals.",
+        "- Python CI scripts remain orchestration clients and do not link Ada directly; a process/CLI adapter can be added when a script needs runtime API calls.",
+        "",
+        "## VM scope",
             "",
-            "This workflow validates the implemented VM core only. It does not build or test an interpreter, parser, frontend, or native backend.",
+            "This workflow validates the VM core, metadata-driven parser, verb-table loader, and SPARK-checked lexer/parser components. Interpreter execution and the native assembler/backend are not yet implemented.",
             "",
         ]
     )
