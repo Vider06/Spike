@@ -4,7 +4,11 @@
   "title": "Spike language definition manifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["format_version", "language", "definitions"],
+  "required": [
+    "format_version",
+    "language",
+    "definitions"
+  ],
   "properties": {
     "format_version": {
       "type": "string",
@@ -13,16 +17,47 @@
     "language": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "source_extension"],
+      "required": [
+        "name",
+        "source_extension"
+      ],
       "properties": {
-        "name": {"type": "string", "const": "Spike"},
-        "source_extension": {"type": "string", "const": ".spike"}
+        "name": {
+          "type": "string",
+          "const": "Spike"
+        },
+        "source_extension": {
+          "type": "string",
+          "const": ".spike"
+        }
       }
     },
     "definitions": {
       "type": "object",
       "additionalProperties": false,
-      "properties": {}
+      "properties": {
+        "verbs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "table",
+            "schema"
+          ],
+          "properties": {
+            "table": {
+              "type": "string",
+              "const": "verbs/verbs.json"
+            },
+            "schema": {
+              "type": "string",
+              "const": "verbs/verbs.schema.json"
+            }
+          }
+        }
+      },
+      "required": [
+        "verbs"
+      ]
     }
   }
 }

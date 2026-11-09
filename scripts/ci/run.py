@@ -50,6 +50,13 @@ REQUIRED_FILES = (
     "src/leng/README.md",
     "src/leng/language.json",
     "src/leng/language.schema.json",
+    "src/leng/verbs/verb_table_types.ads",
+    "src/leng/verbs/verb_table_types.adb",
+    "src/leng/verbs/verb_table_config.ads",
+    "src/leng/verbs/verb_table_config.adb",
+    "src/leng/verbs/verbs.json",
+    "src/leng/verbs/verbs.schema.json",
+    "tests/leng/test_verb_table.adb",
     "tests/frontend/lexer/test_lexer.adb",
     "tests/frontend/lexer/fuzz_lexer.adb",
     "tests/frontend/lexer/golden/basic.spike",
@@ -60,6 +67,7 @@ REQUIRED_FILES = (
 )
 ADA_TESTS = (
     "test_spike_api",
+    "test_verb_table",
     "test_machine_state",
     "test_virtual_memory",
     "test_vm_instructions",
@@ -77,6 +85,8 @@ SPARK_UNITS = (
     "prove_vm_stack.adb",
     "lexer_properties.ads",
     "lexer_properties.adb",
+    "verb_table_types.ads",
+    "verb_table_types.adb",
     "prove_lexer_properties.adb",
 )
 
@@ -322,7 +332,7 @@ def run_ada() -> None:
     execute("GNAT compiler version", ["gnat", "--version"])
     execute("GPRbuild version", ["gprbuild", "--version"])
     execute(
-        "Compile every API, VM, lexer test and proof-harness target",
+        "Compile every API, VM, language, lexer test and proof-harness target",
         ["gprbuild", "-P", "spike.gpr", "-p", "-f", "-j0"],
         log_name="ada-build.log",
     )
@@ -634,7 +644,7 @@ def write_summary() -> None:
             "",
             "## Public API boundary",
         "",
-        "- The Ada-facing `Spike_API` package is the supported in-process entry point for the current lexer service.",
+        "- The Ada-facing `Spike_API` package is the supported in-process entry point for the lexer and validated verb-table services.",
         "- CI compiles and executes the public API contract test; the future manager should depend on this package rather than frontend internals.",
         "- Python CI scripts remain orchestration clients and do not link Ada directly; a process/CLI adapter can be added when a script needs runtime API calls.",
         "",

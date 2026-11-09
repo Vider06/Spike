@@ -4,5 +4,10 @@
     "name": "Spike",
     "source_extension": ".spike"
   },
-  "definitions": {}
+  "definitions": {
+    "verbs": {
+      "table": "verbs/verbs.json",
+      "schema": "verbs/verbs.schema.json"
+    }
+  }
 }

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vider06.github.io/Spike/schemas/verbs-1.0.schema.json",
+  "title": "Spike verb table",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "verbs"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0"},
+    "verbs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "forms"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.]*$"},
+          "forms": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["operands"],
+              "properties": {
+                "operands": {
+                  "type": "array",
+                  "maxItems": 8,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["type"],
+                    "properties": {
+                      "type": {"enum": ["name", "value", "list", "bracket_expression"]}
+                    }
+                  }
+                },
+                "flags": {
+                  "type": "array",
+                  "maxItems": 8,
+                  "uniqueItems": true,
+                  "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}
+                },
+                "keywords": {
+                  "type": "array",
+                  "maxItems": 8,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["name", "after_operand"],
+                    "properties": {
+                      "name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+                      "after_operand": {"type": "integer", "minimum": 0, "maximum": 8}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

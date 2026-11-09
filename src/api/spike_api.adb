@@ -1,10 +1,18 @@
 with Lexer_Properties;
 with Lexer;
+with Verb_Table_Config;
+with Verb_Table_Types;
 
 package body Spike_API is
    use Lexer_Types;
 
    function Version return String is (API_Version);
+
+   function Load_Verb_Table (Path : String) return Verb_Table_Types.Verb_Table is
+     (Verb_Table_Config.Load (Path));
+
+   function Validate_Verb_Table (Document : String) return Verb_Table_Types.Verb_Table is
+     (Verb_Table_Config.Validate (Document));
 
    function Tokenize_Source (Source : String) return Token_Stream_Handle is
       Result : Token_Stream_Handle;

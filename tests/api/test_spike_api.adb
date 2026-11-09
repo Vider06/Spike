@@ -3,6 +3,7 @@ with Ada.Strings.Fixed;
 with Spike_API;
 with Lexer_Types;
 with Lexer_Diagnostics;
+with Verb_Table_Types;
 use type Lexer_Types.Token_Kind;
 use type Lexer_Types.Diagnostic_Code;
 
@@ -12,7 +13,15 @@ procedure Test_Spike_API is
      Spike_API.Tokenize_Source (Source);
    Item : Spike_API.Token_Info;
 begin
-   Assert (Spike_API.Version = "1.1", "public API version");
+   Assert (Spike_API.Version = "1.2", "public API version");
+   declare
+      Verbs : constant Verb_Table_Types.Verb_Table :=
+        Spike_API.Load_Verb_Table ("src/leng/verbs/verbs.json");
+   begin
+      Assert (Verbs.Count = 6, "public API loads the validated verb table");
+      Assert (Verb_Table_Types.To_String (Verbs.Entries (5).Name) = "get",
+              "public API preserves verb metadata");
+   end;
    Assert (Spike_API.Is_Successful (Stream), "well-formed source succeeds");
    Assert (Spike_API.Remaining (Stream) = 2, "API exposes token count");
    Assert (Spike_API.Peek_Token (Stream).Kind = Lexer_Types.Word,

@@ -1,10 +1,11 @@
 with Lexer_Types;
+with Verb_Table_Types;
 
 package Spike_API is
    --  Stable Ada-facing boundary for the Spike toolchain.
    --  Clients depend on this package rather than frontend implementation units.
 
-   API_Version : constant String := "1.1";
+   API_Version : constant String := "1.2";
    End_Of_Stream : exception;
    Invalid_Token_Span : exception;
 
@@ -14,6 +15,8 @@ package Spike_API is
    type Token_Stream_Handle is private;
 
    function Version return String;
+   function Load_Verb_Table (Path : String) return Verb_Table_Types.Verb_Table;
+   function Validate_Verb_Table (Document : String) return Verb_Table_Types.Verb_Table;
    function Tokenize_Source (Source : String) return Token_Stream_Handle;
 
    function Is_Successful (Stream : Token_Stream_Handle) return Boolean;

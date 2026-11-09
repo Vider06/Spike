@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "verbs": [
+    {"name": "mov", "forms": [{"operands": [{"type": "name"}, {"type": "value"}]}]},
+    {"name": "add", "forms": [{"operands": [{"type": "name"}, {"type": "name"}, {"type": "value"}]}]},
+    {"name": "halt", "forms": [{"operands": []}]},
+    {"name": "out.term", "forms": [{"operands": [{"type": "value"}]}]},
+    {
+      "name": "get",
+      "forms": [{
+        "operands": [{"type": "name"}, {"type": "name"}, {"type": "bracket_expression"}],
+        "keywords": [{"name": "from", "after_operand": 2}]
+      }]
+    },
+    {"name": "give", "forms": [{"operands": [{"type": "bracket_expression"}]}]}
+  ]
+}
