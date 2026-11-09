@@ -1,7 +1,4 @@
 with Lexer_Properties;
-with Lexer_Types;
-with Parser_Types;
-with Verb_Table_Types;
 
 package body Parser is
    pragma SPARK_Mode (On);
@@ -73,9 +70,9 @@ package body Parser is
                   Valid := True;
                   return;
                end if;
-               continue;
+            else
+               Cursor := Cursor + 1;
             end if;
-            Cursor := Cursor + 1;
          end;
       end loop;
    end Parse_Bracketed;
