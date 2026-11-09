@@ -60,6 +60,7 @@ package body Parser is
          begin
             if Kind = Left_Bracket then
                Depth := Depth + 1;
+               Cursor := Cursor + 1;
             elsif Kind = Right_Bracket then
                if Depth = 0 then
                   return;
