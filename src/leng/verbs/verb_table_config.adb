@@ -170,6 +170,7 @@ package body Verb_Table_Config is
                raise Config_Error with "verb " & To_String (Verb_Name)
                  & ": form limit (8) exceeded";
             end if;
+            Verb.Form_Count := Length (Forms);
 
             for F in 1 .. Length (Forms) loop
                declare
