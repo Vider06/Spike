@@ -24,7 +24,7 @@ package body Parser is
          then return False; end if;
          First := Source'First + Item.Start_Offset + Prefix;
       end;
-      for Offset in 0 .. Item.Length - 1 loop
+      for Offset in 0 .. Value.Length - 1 loop
          if Source (First + Offset) /= Value.Data (Offset + 1) then return False; end if;
       end loop;
       return True;

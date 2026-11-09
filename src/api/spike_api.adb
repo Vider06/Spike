@@ -1,4 +1,5 @@
 with Lexer_Properties;
+with Parser_Types;
 with Lexer;
 with Parser;
 with Verb_Table_Config;
