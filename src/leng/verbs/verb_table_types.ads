@@ -11,7 +11,7 @@ is
    subtype Name_Length is Natural range 0 .. Max_Name_Length;
    type Identifier is record
       Length : Name_Length := 0;
-      Data   : String (1 .. Max_Name_Length) := (others => ' ');
+      Data   : String (1 .. Max_Name_Length) := [others => ' '];
    end record;
 
    type Operand_Kind is (Name, Value, List, Bracket_Expression);

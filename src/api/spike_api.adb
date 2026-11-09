@@ -1,7 +1,6 @@
 with Lexer_Properties;
 with Lexer;
 with Verb_Table_Config;
-with Verb_Table_Types;
 
 package body Spike_API is
    use Lexer_Types;
