@@ -30,7 +30,7 @@ The frontend IR is the only program representation shared by both backends. It p
 | Area | Responsibility | Current status |
 |---|---|---|
 | `frontend/lexer` | SPARK lexical rules, typed tokens, source spans, structured diagnostics | Phase 1 implementation |
-| `frontend/parser` | Grammar and structured syntax tree | Planned |
+| `frontend/parser` | Metadata-driven statement parser, repeated operand groups, source spans, ambiguity diagnostics, and AST | Phase 3 implementation; hierarchical part structure awaits the final grammar |
 | `frontend/ir` | Validated target-independent instructions | Planned |
 | `backend/quick/interpreter` | Execute validated IR | Planned |
 | `backend/quick/vm` | Registers, memory, stack, virtual semantics | VM primitives implemented |
@@ -42,9 +42,9 @@ The frontend IR is the only program representation shared by both backends. It p
 
 ## Language data boundary
 
-The lexer does not load JSON and does not contain a JSON-defined vocabulary. Its output vocabulary is deliberately small: word, quoted text, left/right bracket, comma, flag, newline with indentation, and comment.
+The lexer does not load JSON and does not contain a JSON-defined vocabulary. Its output vocabulary is deliberately small: word, quoted text, left/right bracket, comma, equals separator, flag, newline with indentation, and comment.
 
-Phase 2 introduces the verb-definition JSON. Its file loader and JSON parser remain ordinary Ada, outside SPARK. A validator checks the complete document and emits a normal Ada table. From that validated table onward, parser and semantic-core code use SPARK-compatible types and contracts. The manifest in `src/leng/language.json` remains the index for future language tables.
+Phase 2 introduces the verb-definition JSON. Operand-shape groups may declare `repeat: true`, which means a variable-length comma-separated group rather than a fixed operand count. Its file loader and JSON parser remain ordinary Ada, outside SPARK. A validator checks the complete document and emits a normal Ada table. From that validated table onward, parser and semantic-core code use SPARK-compatible types and contracts. The manifest in `src/leng/language.json` remains the index for future language tables.
 
 ## Ada and SPARK
 

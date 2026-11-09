@@ -14,7 +14,7 @@ procedure Test_Spike_API is
      Spike_API.Tokenize_Source (Source);
    Item : Spike_API.Token_Info;
 begin
-   Assert (Spike_API.Version = "1.3", "public API version");
+   Assert (Spike_API.Version = "1.4", "public API version");
    declare
       Verbs : constant Verb_Table_Types.Verb_Table :=
         Spike_API.Load_Verb_Table ("src/leng/verbs/verbs.json");

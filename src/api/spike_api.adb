@@ -1,5 +1,4 @@
 with Lexer_Properties;
-with Parser_Types;
 with Lexer;
 with Parser;
 with Verb_Table_Config;
@@ -38,7 +37,7 @@ package body Spike_API is
       Lexer.Tokenize (Source, Tokens, Count, Lex_Error);
       if Lex_Error.Code /= No_Error then
          return
-           (Tree => (Count => 0, Statements => [others => <>]),
+           (Tree => (others => <>),
             Error => Lex_Error);
       end if;
       Parser.Parse (Source, Tokens, Count, Table, Parsed);

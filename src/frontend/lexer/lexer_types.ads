@@ -10,6 +10,7 @@ package Lexer_Types is
       Left_Bracket,
       Right_Bracket,
       Comma,
+      Equals,
       Flag,
       Newline_Indent,
       Comment);
@@ -49,6 +50,7 @@ package Lexer_Types is
       Input_Too_Large,
       Unknown_Verb,
       No_Matching_Form,
+      Ambiguous_Form,
       Unexpected_Token,
       AST_Capacity_Exceeded);
 

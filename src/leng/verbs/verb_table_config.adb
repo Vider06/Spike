@@ -27,11 +27,17 @@ package body Verb_Table_Config is
    end Valid_Identifier;
 
    function Make_Identifier
-     (Value : String; Context : String; Allow_Dot : Boolean := True)
+     (Value : String; Context : String; Allow_Dot : Boolean := True;
+      Allow_Symbol : Boolean := False)
       return Identifier
    is
       Result : Identifier;
    begin
+      if Allow_Symbol and then Value = "=" then
+         Result.Length := 1;
+         Result.Data (1) := '=';
+         return Result;
+      end if;
       if not Valid_Identifier (Value, Allow_Dot) then
          raise Config_Error with Context & ": expected an ASCII identifier";
       end if;
@@ -191,7 +197,7 @@ package body Verb_Table_Config is
                        & ", form" & F'Image & ": operands must be an array";
                   end if;
                   Operands := Form_JSON.Get ("operands");
-                  if Length (Operands) > Max_Operands then
+                  if Length (Operands) > Max_Operand_Groups then
                      raise Config_Error with "verb " & To_String (Verb_Name)
                        & ", form" & F'Image & ": operand limit (8) exceeded";
                   end if;
@@ -203,13 +209,20 @@ package body Verb_Table_Config is
                         Context : constant String :=
                           "verb " & To_String (Verb_Name) & ", operand" & O'Image;
                      begin
-                        if not Allowed_Fields (Operand_JSON, "type") then
+                        if not Allowed_Fields (Operand_JSON, "type|repeat") then
                            raise Config_Error with Context
                              & ": unknown field or expected object";
                         end if;
                         Form.Operands (O).Kind :=
                           Parse_Operand_Kind
                             (Required_String (Operand_JSON, "type", Context), Context);
+                        if Operand_JSON.Has_Field ("repeat") then
+                           if Operand_JSON.Get ("repeat").Kind /= JSON_Boolean_Type then
+                              raise Config_Error with Context & ": repeat must be a boolean";
+                           end if;
+                           Form.Operands (O).Repeated :=
+                             Operand_JSON.Get ("repeat").Get;
+                        end if;
                      end;
                   end loop;
 
@@ -280,7 +293,8 @@ package body Verb_Table_Config is
                            Form.Keywords (K).Name := Make_Identifier
                              (To_String (Keyword_Name),
                               "verb " & To_String (Verb_Name) & ", keyword" & K'Image,
-                              Allow_Dot => False);
+                              Allow_Dot => False,
+                              Allow_Symbol => True);
                            if not Keyword_JSON.Has_Field ("after_operand")
                              or else Keyword_JSON.Get ("after_operand").Kind /= JSON_Int_Type
                            then
@@ -305,6 +319,18 @@ package body Verb_Table_Config is
                         end;
                      end loop;
                   end if;
+                  for O in 1 .. Form.Operand_Count loop
+                     if Form.Operands (O).Repeated then
+                        if O < Form.Operand_Count
+                          and then not (for some K in 1 .. Form.Keyword_Count =>
+                            Form.Keywords (K).After_Operand = O)
+                        then
+                           raise Config_Error with "verb " & To_String (Verb_Name)
+                             & ", operand" & O'Image
+                             & ": a repeated operand group must end at a keyword boundary or the end of the form";
+                        end if;
+                     end if;
+                  end loop;
                   Verb.Forms (F) := Form;
                end;
             end loop;

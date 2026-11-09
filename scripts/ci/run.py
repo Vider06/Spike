@@ -91,6 +91,8 @@ SPARK_UNITS = (
     "prove_vm_stack.adb",
     "lexer_properties.ads",
     "lexer_properties.adb",
+    "parser_types.ads",
+    "parser.adb",
     "verb_table_types.ads",
     "verb_table_types.adb",
     "prove_lexer_properties.adb",
@@ -656,7 +658,7 @@ def write_summary() -> None:
         "",
         "## VM scope",
             "",
-            "This workflow validates the VM core and the SPARK-based lexical frontend. It does not yet validate a complete parser, interpreter, or native backend.",
+            "This workflow validates the VM core, metadata-driven parser, verb-table loader, and SPARK-checked lexer/parser components. Interpreter execution and the native assembler/backend are not yet implemented.",
             "",
         ]
     )

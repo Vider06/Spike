@@ -18,15 +18,20 @@ The root contains `schema_version` (exactly `1.0`) and a non-empty
 has an ordered `operands` array and optional `flags` and `keywords` arrays.
 
 Operand types are `name`, `value`, `list`, and `bracket_expression`.
-A keyword has a name and `after_operand`, which identifies the number of
-operands that appear before it. The starter `get` form places `from` after
-its second operand.
+A keyword or separator has a name and `after_operand`, which identifies the
+operand-shape group after which it appears. An operand group may declare
+`repeat: true`, allowing an arbitrary comma-separated number of actual
+operands. The starter `get` form uses repeated destination and source groups,
+with `from` and `=` separating them.
 
 ## Limits
 
-The validated representation is bounded: 128 verbs, 8 forms per verb, and 8
-operands, flags, or keywords per form. The validator rejects values outside
-these limits before returning the table.
+The validated metadata representation is bounded: 128 verb declarations, 8
+forms per verb, and 8 operand-shape groups, flag declarations, or separators
+per form. These are limits on metadata shape declarations, not on actual
+operand cardinality. A repeated group can contain as many operands as the
+source input/resource limits permit. The AST likewise has no per-statement
+operand or flag count cap.
 
 ## Diagnostics
 

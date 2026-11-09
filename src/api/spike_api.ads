@@ -6,7 +6,7 @@ package Spike_API is
    --  Stable Ada-facing boundary for the Spike toolchain.
    --  Clients depend on this package rather than frontend implementation units.
 
-   API_Version : constant String := "1.3";
+   API_Version : constant String := "1.4";
    End_Of_Stream : exception;
    Invalid_Token_Span : exception;
 

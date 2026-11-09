@@ -29,12 +29,14 @@
                 "operands": {
                   "type": "array",
                   "maxItems": 8,
+                  "description": "Maximum number of operand-shape groups in a form; repeat=true makes the corresponding group variable-length.",
                   "items": {
                     "type": "object",
                     "additionalProperties": false,
                     "required": ["type"],
                     "properties": {
-                      "type": {"enum": ["name", "value", "list", "bracket_expression"]}
+                      "type": {"enum": ["name", "value", "list", "bracket_expression"]},
+                      "repeat": {"type": "boolean"}
                     }
                   }
                 },
@@ -52,7 +54,7 @@
                     "additionalProperties": false,
                     "required": ["name", "after_operand"],
                     "properties": {
-                      "name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+                      "name": {"type": "string", "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*|=)$"},
                       "after_operand": {"type": "integer", "minimum": 0, "maximum": 8}
                     }
                   }

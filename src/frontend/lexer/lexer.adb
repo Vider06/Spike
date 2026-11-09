@@ -26,7 +26,7 @@ package body Lexer is
       function Is_Delimiter (Offset : Natural) return Boolean is
         (Lexer_Properties.Is_Horizontal_Space (Character_At (Offset))
          or else Lexer_Properties.Is_Line_Break (Character_At (Offset))
-         or else Character_At (Offset) in '[' | ']' | ',' | '"'
+         or else Character_At (Offset) in '[' | ']' | ',' | '=' | '"'
          or else Starts_Comment (Offset));
 
       function Is_Control (Item : Character) return Boolean is
@@ -308,6 +308,11 @@ package body Lexer is
                Cursor := Cursor + 1;
                Column := Column + 1;
                Emit (Comma, Start, 1, Start_Line, Start_Column);
+
+            elsif Current = '=' then
+               Cursor := Cursor + 1;
+               Column := Column + 1;
+               Emit (Equals, Start, 1, Start_Line, Start_Column);
 
             elsif Current = '-'
               and then Cursor + 1 < Source'Length

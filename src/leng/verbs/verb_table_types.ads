@@ -4,7 +4,7 @@ is
    Max_Name_Length : constant := 64;
    Max_Verbs        : constant := 128;
    Max_Forms        : constant := 8;
-   Max_Operands     : constant := 8;
+   Max_Operand_Groups     : constant := 8;
    Max_Flags        : constant := 8;
    Max_Keywords     : constant := 8;
 
@@ -16,9 +16,10 @@ is
 
    type Operand_Kind is (Name, Value, List, Bracket_Expression);
    type Operand_Spec is record
-      Kind : Operand_Kind := Name;
+      Kind     : Operand_Kind := Name;
+      Repeated : Boolean := False;
    end record;
-   type Operand_Array is array (Positive range 1 .. Max_Operands) of Operand_Spec;
+   type Operand_Array is array (Positive range 1 .. Max_Operand_Groups) of Operand_Spec;
 
    type Identifier_Array is
      array (Positive range 1 .. Max_Flags) of Identifier;
@@ -27,13 +28,13 @@ is
 
    type Keyword_Spec is record
       Name           : Identifier;
-      After_Operand  : Natural range 0 .. Max_Operands := 0;
+      After_Operand  : Natural range 0 .. Max_Operand_Groups := 0;
    end record;
    type Keyword_Spec_Array is
      array (Positive range 1 .. Max_Keywords) of Keyword_Spec;
 
    type Form_Entry is record
-      Operand_Count : Natural range 0 .. Max_Operands := 0;
+      Operand_Count : Natural range 0 .. Max_Operand_Groups := 0;
       Operands      : Operand_Array := [others => <>];
       Flag_Count    : Natural range 0 .. Max_Flags := 0;
       Flags         : Identifier_Array := [others => <>];

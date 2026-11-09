@@ -8,10 +8,23 @@
     {
       "name": "get",
       "forms": [{
-        "operands": [{"type": "name"}, {"type": "name"}, {"type": "bracket_expression"}],
-        "keywords": [{"name": "from", "after_operand": 2}]
+        "operands": [
+          {"type": "name", "repeat": true},
+          {"type": "bracket_expression"},
+          {"type": "name", "repeat": true}
+        ],
+        "keywords": [
+          {"name": "from", "after_operand": 1},
+          {"name": "=", "after_operand": 2}
+        ]
       }]
     },
-    {"name": "give", "forms": [{"operands": [{"type": "bracket_expression"}]}]}
+    {
+      "name": "give",
+      "forms": [
+        {"operands": [{"type": "bracket_expression"}]},
+        {"operands": [{"type": "name", "repeat": true}]}
+      ]
+    }
   ]
 }

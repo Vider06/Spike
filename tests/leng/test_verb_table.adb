@@ -37,15 +37,25 @@ begin
    Assert (Table.Entries (2).Forms (1).Operand_Count = 3, "add has three operands");
    Assert (Table.Entries (3).Forms (1).Operand_Count = 0, "halt accepts no operands");
    Assert (To_String (Table.Entries (4).Name) = "out.term", "dotted verb names are supported");
-   Assert (Table.Entries (5).Forms (1).Keyword_Count = 1, "get declares a keyword");
+   Assert (Table.Entries (5).Forms (1).Keyword_Count = 2,
+           "get declares both source separators");
    Assert (To_String (Table.Entries (5).Forms (1).Keywords (1).Name) = "from",
-           "get keyword name");
-   Assert (Table.Entries (5).Forms (1).Keywords (1).After_Operand = 2,
-           "from follows the second operand");
-   Assert (Table.Entries (6).Forms (1).Operand_Count = 1,
-           "give requires its continuation operand");
+           "get source keyword name");
+   Assert (Table.Entries (5).Forms (1).Keywords (1).After_Operand = 1,
+           "from follows the variable-length destination group");
+   Assert (To_String (Table.Entries (5).Forms (1).Keywords (2).Name) = "=",
+           "get assignment separator is represented in metadata");
+   Assert (Table.Entries (5).Forms (1).Keywords (2).After_Operand = 2,
+           "assignment separator follows the source part expression");
+   Assert (Table.Entries (5).Forms (1).Operands (1).Repeated
+           and then Table.Entries (5).Forms (1).Operands (3).Repeated,
+           "get destination and source groups are both variable-length");
+   Assert (Table.Entries (6).Form_Count = 2,
+           "give supports both control markers and variable-length name groups");
    Assert (Table.Entries (6).Forms (1).Operands (1).Kind = Bracket_Expression,
-           "give continuation is a bracket expression");
+           "give continuation marker is a bracket expression");
+   Assert (Table.Entries (6).Forms (2).Operands (1).Repeated,
+           "give name group is variable-length");
 
    declare
       With_Flag_And_List : constant Verb_Table := Verb_Table_Config.Validate
