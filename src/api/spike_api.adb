@@ -1,3 +1,5 @@
+with Dynamic_Lexer;
+
 package body Spike_API is
    function Version return String is (API_Version);
 
