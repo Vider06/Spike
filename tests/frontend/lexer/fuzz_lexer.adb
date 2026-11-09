@@ -1,6 +1,7 @@
 with Ada.Assertions; use Ada.Assertions;
 with Ada.Text_IO; use Ada.Text_IO;
 with Lexer;
+with Lexer_Properties;
 with Lexer_Types;
 
 procedure Fuzz_Lexer is
@@ -42,7 +43,7 @@ begin
                      declare
                         Item : constant Token := Tokens (Tokens'First + Offset);
                      begin
-                        Assert (Valid_Span (Item.Start_Offset, Item.Length, Source'Length),
+                        Assert (Lexer_Properties.Valid_Span (Item.Start_Offset, Item.Length, Source'Length),
                                 "fuzz token span is non-empty and in bounds");
                         if not First_Token then
                            Assert (Previous_End <= Item.Start_Offset,
