@@ -37,7 +37,7 @@ This phase deliberately does not know the names or operand requirements of Spike
 - a comma must have a valid token on both sides and horizontal whitespace immediately before and after it;
 - control characters outside quoted text/comments are rejected.
 
-A comma may be surrounded by whitespace or adjacent to its operands. The parser will later determine whether the token sequence is valid for the verb's operand schema.
+A comma is valid only when horizontal whitespace appears immediately on both sides. The parser will later determine whether the resulting token sequence is valid for the verb's operand schema.
 
 ## Diagnostics
 

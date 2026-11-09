@@ -42,7 +42,7 @@ Not yet implemented: parser, semantic frontend validation, IR, Quick interpreter
 
 ## Language definition data
 
-The source of truth for the machine-readable language data is [`src/leng/language.json`](src/leng/language.json). It indexes domain-specific JSON definitions and their schemas. The current lexer vocabulary lives in [`src/leng/lexer/tokens.json`](src/leng/lexer/tokens.json). Adding a token definition is a JSON change; adding a new matcher algorithm requires changing the Ada lexer engine and its schema.
+The lexical rules are implemented directly by the bounded SPARK lexer; token recognition is no longer configured by JSON. [`src/leng/language.json`](src/leng/language.json) remains the manifest for machine-readable language tables. Phase 2 will add the JSON verb table and a non-SPARK loader that validates it into an Ada table consumed by the SPARK core.
 
 ## Repository layout
 
