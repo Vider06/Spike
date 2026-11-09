@@ -36,6 +36,10 @@ package body Lexer_Diagnostics is
          when Invalid_Comma                  => return "LEX009";
          when Token_Capacity_Exceeded        => return "LEX010";
          when Input_Too_Large                => return "LEX011";
+         when Unknown_Verb                   => return "PAR001";
+         when No_Matching_Form               => return "PAR002";
+         when Unexpected_Token               => return "PAR003";
+         when AST_Capacity_Exceeded          => return "PAR004";
       end case;
    end Code_Name;
 
@@ -54,6 +58,10 @@ package body Lexer_Diagnostics is
          when Invalid_Comma                  => return "comma must separate two operands";
          when Token_Capacity_Exceeded        => return "token buffer capacity exceeded";
          when Input_Too_Large                => return "source exceeds the 16 MiB lexer limit";
+         when Unknown_Verb                   => return "verb is not declared in the active verb table";
+         when No_Matching_Form               => return "statement does not match any declared verb form";
+         when Unexpected_Token               => return "unexpected token at the start of a statement";
+         when AST_Capacity_Exceeded          => return "abstract syntax tree capacity exceeded";
       end case;
    end Message;
 
