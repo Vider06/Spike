@@ -1,5 +1,6 @@
 with Ada.Strings.Unbounded;
 with Lexer_Config;
+with Lexer_Types;
 with Token_Stream;
 
 package Spike_API is
@@ -9,6 +10,8 @@ package Spike_API is
 
    API_Version : constant String := "1.0";
    function Version return String;
+
+   function Lex_Source (Source : String) return Lexer_Types.Lex_Result;
 
    type Token_Info is record
       Kind         : Ada.Strings.Unbounded.Unbounded_String;

@@ -23,6 +23,7 @@ project Spike is
       "test_vm_instructions.adb",
       "test_vm_stack.adb",
       "test_dynamic_lexer.adb",
+      "test_spike_lexer.adb",
       "fuzz_dynamic_lexer.adb",
       "prove_virtual_memory.adb",
       "prove_vm_stack.adb",

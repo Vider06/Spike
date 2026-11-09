@@ -1,7 +1,15 @@
 with Dynamic_Lexer;
+with Spike_Lexer;
 
 package body Spike_API is
    function Version return String is (API_Version);
+
+   function Lex_Source (Source : String) return Lexer_Types.Lex_Result is
+      Result : Lexer_Types.Lex_Result;
+   begin
+      Spike_Lexer.Tokenize (Source, Result);
+      return Result;
+   end Lex_Source;
 
    function Load_Lexer_Configuration
      (Path : String) return Lexer_Config.Lexer_Configuration

@@ -1,6 +1,7 @@
 with Ada.Assertions; use Ada.Assertions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Lexer_Config;
+with Lexer_Types;
 with Spike_API;
 
 procedure Test_Spike_API is
@@ -11,6 +12,14 @@ procedure Test_Spike_API is
    Item : Spike_API.Token_Info;
 begin
    Assert (Spike_API.Version = "1.0", "public API version");
+   declare
+      Lexed : constant Lexer_Types.Lex_Result := Spike_API.Lex_Source ("hello");
+   begin
+      Assert (not Lexed.Has_Error and then Lexed.Count = 1,
+              "public API exposes the phase-one SPARK lexer");
+      Assert (Lexed.Tokens (1).Kind = Lexer_Types.Word,
+              "public API preserves token kind");
+   end;
    Assert (Spike_API.Remaining (Stream) = 4, "API exposes emitted token count");
    Assert (To_String (Spike_API.Peek_Token (Stream).Kind) = "IDENTIFIER",
            "API peek returns the first token without consuming");
