@@ -1,11 +1,10 @@
-with Lexer_Types;
-use type Lexer_Types.Token_Kind;
-use type Lexer_Types.Diagnostic_Code;
 with Ada.Assertions; use Ada.Assertions;
 with Ada.Strings.Fixed;
 with Spike_API;
 with Lexer_Types;
 with Lexer_Diagnostics;
+use type Lexer_Types.Token_Kind;
+use type Lexer_Types.Diagnostic_Code;
 
 procedure Test_Spike_API is
    Source : constant String := "out.term ""Hello""";
