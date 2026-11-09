@@ -1,51 +1,51 @@
-with Ada.Strings.Unbounded;
-with Lexer_Config;
 with Lexer_Types;
-with Token_Stream;
 
 package Spike_API is
    --  Stable Ada-facing boundary for the Spike toolchain.
-   --  The manager and other Ada clients should depend on this package rather
-   --  than importing frontend implementation units directly.
+   --  Clients depend on this package rather than frontend implementation units.
 
-   API_Version : constant String := "1.0";
-   function Version return String;
+   API_Version : constant String := "1.1";
+   End_Of_Stream : exception;
+   Invalid_Token_Span : exception;
 
-   function Lex_Source (Source : String) return Lexer_Types.Lex_Result;
-
-   type Token_Info is record
-      Kind         : Ada.Strings.Unbounded.Unbounded_String;
-      Lexeme       : Ada.Strings.Unbounded.Unbounded_String;
-      Value        : Ada.Strings.Unbounded.Unbounded_String;
-      Start_Offset : Natural := 0;
-      End_Offset   : Natural := 0;
-      Line         : Positive := 1;
-      Column       : Positive := 1;
-   end record;
+   subtype Token_Info is Lexer_Types.Token;
+   subtype Diagnostic_Info is Lexer_Types.Diagnostic;
 
    type Token_Stream_Handle is private;
 
-   function Load_Lexer_Configuration
-     (Path : String) return Lexer_Config.Lexer_Configuration;
+   function Version return String;
+   function Tokenize_Source (Source : String) return Token_Stream_Handle;
 
-   function Validate_Lexer_Configuration
-     (Document : String) return Lexer_Config.Lexer_Configuration;
-
-   function Tokenize_Source
-     (Configuration : Lexer_Config.Lexer_Configuration;
-      Source        : String) return Token_Stream_Handle;
-
+   function Is_Successful (Stream : Token_Stream_Handle) return Boolean;
+   function Failure (Stream : Token_Stream_Handle) return Diagnostic_Info;
    function Position (Stream : Token_Stream_Handle) return Natural;
    function Remaining (Stream : Token_Stream_Handle) return Natural;
+
    function Peek_Token
-     (Stream : Token_Stream_Handle; Distance : Natural := 0)
-      return Token_Info;
+     (Stream : Token_Stream_Handle;
+      Distance : Natural := 0) return Token_Info;
+
    procedure Next_Token
-     (Stream : in out Token_Stream_Handle; Item : out Token_Info);
+     (Stream : in out Token_Stream_Handle;
+      Item : out Token_Info);
+
    procedure Reset (Stream : in out Token_Stream_Handle);
 
+   function Text_Of
+     (Source : String;
+      Item : Token_Info) return String;
+
 private
+   subtype Token_Buffer is
+     Lexer_Types.Token_Array (1 .. Lexer_Types.Max_Tokens);
+
    type Token_Stream_Handle is record
-      Data : Token_Stream.Stream;
+      Data    : Token_Buffer := (others => <>);
+      Count   : Natural := 0;
+      Cursor  : Natural := 0;
+      Error   : Lexer_Types.Diagnostic :=
+        (Phase => Lexer_Types.Lexing,
+         Code => Lexer_Types.No_Error,
+         Location => (Offset => 0, Line => 1, Column => 1));
    end record;
 end Spike_API;

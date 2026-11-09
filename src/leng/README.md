@@ -1,10 +1,7 @@
 # Language definitions
 
-This directory is the machine-readable source of truth for Spike language definitions. `language.json` is the manifest; it references versioned JSON modules and each module's schema.
+This directory is reserved for machine-readable language tables and their schemas. `language.json` is the manifest.
 
-Current modules:
+The Phase 1 lexer does not load JSON. Lexical token forms and their source positions are defined by the SPARK lexer in `src/frontend/lexer/`.
 
-- [lexer/tokens.json](lexer/tokens.json): token names, matcher primitives, priorities, and emission policy.
-- [lexer/tokens.schema.json](lexer/tokens.schema.json): validation schema for lexer definitions.
-
-As grammar, instruction-set, directives, operand forms, and ABI data become machine-readable, add separate domain files and schemas here and register them in `language.json`. Do not duplicate prose specifications in JSON: Markdown remains normative where structured data is not needed. Runtime code must load definitions from this directory rather than carry parallel hardcoded language tables.
+Phase 2 will add the verb-definition JSON and its schema. The JSON loader/parser will remain outside SPARK; a validator will convert the document into a normal Ada table suitable for the SPARK parser and semantic core. Future structured definitions can be added as separate domain files and registered in the manifest. Markdown remains the normative home for prose rules and rationale.

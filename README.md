@@ -11,7 +11,7 @@ Spike source
     |
     v
 Frontend
-    Lexer -> Token Stream -> Parser -> Validation -> IR
+    Lexer -> Typed Token List -> Parser -> Validation -> IR
                                                    |
                          +-------------------------+----------------------+
                          |                                                |
@@ -34,8 +34,8 @@ Frontend
 Implemented now:
 
 - Ada 2022 virtual-machine state, memory, stack, and virtual instruction primitives.
-- JSON-driven dynamic lexer and validated token stream.
-- Deterministic lexer fuzz/regression tests.
+- SPARK-based lexer with typed tokens, source locations, and structured diagnostics.
+- Deterministic lexer fuzzing, positive/negative rule tests, and golden token fixtures.
 - SPARK contracts and proof harnesses for bounded VM and lexer properties.
 
 Not yet implemented: parser, semantic frontend validation, IR, Quick interpreter loop, native assembler/build pipeline, CLI, Spike Manager, and linker integration. The initial Ada-facing `Spike_API` facade is implemented for the lexer boundary; it is not yet a user-facing command-line interface. The directory structure documents these boundaries without claiming the future components already exist.
@@ -50,7 +50,7 @@ The source of truth for the machine-readable language data is [`src/leng/languag
 src/
   api/                  # implemented: stable Ada-facing toolchain facade
   frontend/
-    lexer/              # implemented: JSON-driven lexer and token stream
+    lexer/              # implemented: SPARK lexer, typed tokens, diagnostics
     parser/              # planned parser boundary
     ir/                  # planned target-independent representation
   backend/
@@ -66,7 +66,7 @@ src/
       encoder/           # planned target encodings
       object/            # planned object-file writer
       linker/            # planned linker integration
-  leng/                  # language JSON manifest, definitions, schemas
+  leng/                  # language JSON manifest and future verb definitions
 tests/
   api/                  # public API contract tests
   frontend/lexer/
@@ -99,7 +99,7 @@ Ada source paths are mirrored by the test and proof areas. The GPR project file 
 - [Virtual ISA 0.1](docs/isa/ISA-0.1.md)
 - [Custom syntax and grammar draft](docs/language/GRAMMAR-0.1.md)
 - [Toolchain architecture](docs/toolchain/TOOLCHAIN.md)
-- [Dynamic lexer](docs/toolchain/DYNAMIC-LEXER.md)
+- [Lexer](docs/toolchain/LEXER.md)
 - [Conformance and testing](docs/testing/CONFORMANCE-AND-TESTING.md)
 - [Continuous integration and verification gates](docs/CI.md)
 - [Roadmap](docs/ROADMAP.md)

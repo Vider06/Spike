@@ -1,65 +1,61 @@
-# Spike implementation roadmap
+# Spike 0.2 implementation roadmap
 
-**Status:** Ordered implementation plan. Component status is reflected in the repository tree and the checks that actually run.
+**Status:** Phase 1 implementation in progress. A phase is complete only when its stated tests and diagnostics are present and pass.
 
-## Phase 0 — Language and architecture foundation
+## Phase 1 — Lexer
 
-The project identity, custom source syntax direction, virtual-ISA model, and x86-64 first native target are established in the [language specification](../specification/SPECIFICATION.md), [architecture overview](architecture/OVERVIEW.md), and architecture decision records.
+**Output:** a bounded list of tokens, each with a kind and source position (line, column, byte offset, and source span).
 
-## Phase 1 — Virtual machine foundation
+Token kinds: word, quoted text, left bracket, right bracket, comma, `--flag`, newline with indentation, and comment. The lexer checks lexical shape only: quote termination, flag spelling, bracket balance and bracket-edge whitespace, comma spacing and placement, and valid source characters. It does not know verb names or operand meanings.
 
-Implemented VM primitives include:
+**Completion gate:** each lexical writing rule has a positive and a negative test; every negative case returns the shared diagnostic record with the correct line and column. A checked-in golden fixture verifies the exact token list.
 
-- Sixteen virtual registers, PC, SP, flags, execution status, and structured terminal fault state.
-- Deterministic initialization and reset.
-- Finite virtual byte memory with bounded region tracking and non-overlapping mappings.
-- Independent read, write, and execute permissions with W^X enforcement.
-- Checked byte and little-endian word access.
-- Bounded memory-backed stack with overflow/underflow checks.
-- Virtual instruction semantics and explicit control-flow primitives.
+## Phase 2 — Verb table (JSON)
 
-The VM packages live under `src/backend/quick/vm/`.
+Define the verb table schema: verb name, operand forms, flags, keywords such as `into` and `from`, and operand kinds (name, value, list, or bracketed expression). The JSON file loader and JSON parser stay outside SPARK. A validator rejects malformed entries precisely and emits a normal Ada table.
 
-## Phase 2 — Dynamic lexical frontend
+**Completion gate:** malformed JSON and malformed entries produce stable, field-specific diagnostics such as `verb cop, operand 2: unknown type`. Everything consuming the validated table uses SPARK-compatible data.
 
-Implemented:
+## Phase 3 — Parser
 
-- JSON-owned token definitions and schema under `src/leng/lexer/`.
-- A manifest at `src/leng/language.json`.
-- Ada lexer configuration validation and indexed maximal-munch matching.
-- Validated token streams with bounded cursor and source-span invariants.
-- Deterministic regression fuzzing and tests.
-- SPARK contracts for the bounded properties that can be isolated and proved.
+Input: tokens plus the validated verb table. Output: a printable syntax tree containing nested parts, source lines, and operands. The parser checks structure only and consults the table for each verb's operand shape. It must not contain a hardcoded list of verb names.
 
-The lexer is under `src/frontend/lexer/`. Adding token spellings or names is data-driven; adding a new matcher primitive requires an engine/schema change.
+**Completion gate:** a representative program becomes the expected printable tree, compared against a golden file.
 
-## Phase 3 — Parser and validated IR
+## Phase 4 — Names and scope
 
-Next:
+Build symbol tables for variables and parts, with `global`, `local`, and `private` visibility. Resolve `get`, `give`, and `set` aliases and scope transitions.
 
-- Parse token streams using the language grammar.
-- Produce structured diagnostics with source spans.
-- Validate operands, symbols, labels, directives, and instruction forms.
-- Define a stable target-independent IR consumed by both execution backends.
+**Completion gate:** unresolved names, reads of non-exported variables, and aliases used outside their scope report the correct source location.
 
-Boundaries are reserved under `src/frontend/parser/` and `src/frontend/ir/`.
+## Phase 5 — Types and checks
 
-## Phase 4 — Quick interpreter
+Determine every variable and expression type and validate that literal content is valid for its type. Add compile-time checks for `get` without `wait.oncall`, circular dependencies, lock ordering, and `wait.oncall` on infinite parts.
 
-Implement the Quick interpreter over validated IR. It should dispatch virtual instructions through the VM packages and preserve the specified VM fault model. No parsing or source syntax handling belongs in this backend.
+**Completion gate:** every rule has an invalid program that produces the expected diagnostic at the responsible source location.
 
-## Phase 5 — Native Build backend
+## Phase 6 — IR definition
 
-Implement the build assembler, target encoder, object writer, and linker integration under `src/backend/build/`. Add exact encoding, relocation, and object-format tests. The native backend must preserve the same virtual semantics as Quick.
+Define a small target-independent IR before implementing verb lowering. Operations use symbolic operands (variables, labels, virtual registers), not concrete addresses. Each operation records what it reads, writes, and locks, plus its original source location for explain output, tracing, and runtime diagnostics.
 
-## Phase 6 — Conformance and stabilization
+**Completion gate:** the IR has a stable printable form and a validator for label definitions and operand consistency.
 
-Deliver end-to-end examples, language conformance fixtures, differential Quick/Native tests, property-based testing, long-running fuzzing where useful, scoped SPARK reports, installation instructions, and an accurate feature matrix.
+## Phase 7 — Lowering (syntax tree to IR)
 
-## Deferred
+Register one lowering function per verb name in the validated verb table. The registry associates data-defined verbs with their implementation without making the parser depend on verb names.
 
-Additional native architectures, PE/COFF, Mach-O, a custom linker, vector/floating-point operations, atomics, concurrency, privileged kernel/bootloader profiles, macros, self-hosting, and optimizations beyond correctness-preserving lowering.
+**Completion gate:** every supported verb has a test that compares generated IR with a handwritten expected golden file.
 
-## Change control
+## Phase 8 — IR to VM
 
-If implementation exposes a flaw in a normative decision, update the relevant ADR and specification before relying on changed behavior. Implementation convenience must never silently become language semantics.
+Allocate virtual registers and addresses from validated IR, then emit VM instructions. Keep VM architectural semantics in the existing VM packages; this phase adds the bridge from IR to those primitives.
+
+**Completion gate:** the same representative program runs in the interpreter and produces the expected output.
+
+## Rules shared by every phase
+
+- Diagnostics share one structure from Phase 1: phase, stable code, byte offset, line, and column.
+- Every source fixture has a golden output for each implemented representation: tokens, syntax tree, IR, or execution result.
+- The JSON loader is ordinary Ada outside SPARK. From the validated verb table onward, the core uses SPARK-compatible structures and contracts.
+- The VM is not rewritten during the lexer phase. Its existing primitives remain the execution foundation for Phase 8.
+- The Spike Manager is deferred until the language pipeline is in place.

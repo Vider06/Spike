@@ -5,9 +5,9 @@
 ```text
 Source
   -> Frontend/Lexer
-  -> Token Stream
+  -> Typed token list
   -> Frontend/Parser
-  -> Semantic validation
+  -> Name and type validation
   -> Frontend IR
        |                              |
        v                              v
@@ -23,14 +23,14 @@ Source
                                 Native artifact
 ```
 
-The frontend IR is the only program representation shared by both backends. It preserves source spans, typed operands, labels, selected profile, and instruction effects. It contains no host register allocation or target byte encoding.
+The frontend IR is the only program representation shared by both backends. It preserves source locations, typed operands, labels, selected profile, and instruction effects. It contains no host register allocation or target byte encoding.
 
 ## Component ownership
 
 | Area | Responsibility | Current status |
 |---|---|---|
-| `frontend/lexer` | JSON-configured tokens, source spans, token stream | Implemented |
-| `frontend/parser` | Grammar and structured syntax | Planned |
+| `frontend/lexer` | SPARK lexical rules, typed tokens, source spans, structured diagnostics | Phase 1 implementation |
+| `frontend/parser` | Grammar and structured syntax tree | Planned |
 | `frontend/ir` | Validated target-independent instructions | Planned |
 | `backend/quick/interpreter` | Execute validated IR | Planned |
 | `backend/quick/vm` | Registers, memory, stack, virtual semantics | VM primitives implemented |
@@ -38,13 +38,13 @@ The frontend IR is the only program representation shared by both backends. It p
 | `backend/build/encoder` | Emit target instruction bytes | Planned |
 | `backend/build/object` | Sections, symbols, relocations, object metadata | Planned |
 | `backend/build/linker` | Final link orchestration | Planned |
-| `leng` | Machine-readable language and token definitions | Manifest and lexer definitions implemented |
+| `leng` | Machine-readable language tables and schemas | Reserved for the Phase 2 verb table |
 
-## Language data
+## Language data boundary
 
-Machine-readable definitions belong under `src/leng/`. The root `language.json` manifest indexes domain files and schemas. The Ada lexer loads the token table; it must not contain parallel hardcoded keyword or operator spelling tables. New matcher algorithms are implemented in the engine and declared in the schema, while ordinary token additions remain JSON-only.
+The lexer does not load JSON and does not contain a JSON-defined vocabulary. Its output vocabulary is deliberately small: word, quoted text, left/right bracket, comma, flag, newline with indentation, and comment.
 
-Normative prose, rationale, and architectural decisions remain in the specification and ADR documents. JSON should represent structured data, not duplicate prose contracts.
+Phase 2 introduces the verb-definition JSON. Its file loader and JSON parser remain ordinary Ada, outside SPARK. A validator checks the complete document and emits a normal Ada table. From that validated table onward, parser and semantic-core code use SPARK-compatible types and contracts. The manifest in `src/leng/language.json` remains the index for future language tables.
 
 ## Ada and SPARK
 
@@ -52,8 +52,8 @@ Ada 2022 is the implementation language. Bounded deterministic state transitions
 
 ## Error handling
 
-Distinguish source errors, unsupported target features, invariant failures, host I/O errors, and runtime VM faults. Expected user errors should produce structured diagnostics, not uncontrolled crashes.
+Every phase uses one diagnostic record: phase, stable code, zero-based byte offset, and one-based line/column. Human-readable formatting is a separate presentation step. Expected user errors are returned as structured diagnostics, not uncontrolled crashes.
 
 ## Reproducibility
 
-Record compiler versions, target profile, object format version, and relevant build options. Reproducibility should be maintained where timestamps and platform metadata permit.
+Every positive/negative lexer rule has explicit tests, and the basic source fixture has a checked-in golden token listing. Later phases add golden syntax-tree, IR, and execution-result files for each program fixture. Compiler versions, target profile, object format version, and relevant build options should be recorded when they become applicable.

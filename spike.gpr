@@ -1,5 +1,3 @@
-with "gnatcoll_core";
-
 project Spike is
    for Languages use ("Ada");
    for Source_Dirs use
@@ -22,9 +20,8 @@ project Spike is
       "test_virtual_memory.adb",
       "test_vm_instructions.adb",
       "test_vm_stack.adb",
-      "test_dynamic_lexer.adb",
-      "test_spike_lexer.adb",
-      "fuzz_dynamic_lexer.adb",
+      "test_lexer.adb",
+      "fuzz_lexer.adb",
       "prove_virtual_memory.adb",
       "prove_vm_stack.adb",
       "prove_lexer_properties.adb");

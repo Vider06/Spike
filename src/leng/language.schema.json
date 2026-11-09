@@ -22,18 +22,7 @@
     "definitions": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["lexer"],
-      "properties": {
-        "lexer": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["tokens", "schema"],
-          "properties": {
-            "tokens": {"type": "string", "const": "lexer/tokens.json"},
-            "schema": {"type": "string", "const": "lexer/tokens.schema.json"}
-          }
-        }
-      }
+      "properties": {}
     }
   }
 }
